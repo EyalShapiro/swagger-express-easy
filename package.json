@@ -1,0 +1,89 @@
+{
+  "name": "swagger-express-easy",
+  "version": "1.1.2",
+  "description": "Auto-generated Swagger documentation using swagger-autogen",
+  "license": "MIT",
+  "author": "Eyal Shapiro",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EyalShapiro/swagger-express-easy.git"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./swagger": {
+      "require": "./dist/swagger/index.js",
+      "types": "./dist/swagger/index.d.ts"
+    },
+    "./schemas": {
+      "require": "./dist/swagger/schemas.js",
+      "types": "./dist/swagger/schemas.d.ts"
+    },
+    "./routeStore": {
+      "require": "./dist/swagger/routeStore/index.js",
+      "types": "./dist/swagger/routeStore/index.d.ts"
+    }
+  },
+  "scripts": {
+    "test": "jest",
+    "build": "npx rimraf dist && tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build",
+    "start": "node dist/src/app.js",
+    "dev": "npm run swagger && nodemon",
+    "lint": "eslint '{src,lib}/**/*.{js,ts,tsx}' --fix",
+    "format": "prettier --write '{src,lib}/**/*.{ts,tsx}'",
+    "swagger": "ts-node -r tsconfig-paths/register lib/swagger/start.ts"
+  },
+  "peerDependencies": {
+    "express": ">=4.0.0",
+    "swagger-autogen": ">=2.23.0",
+    "swagger-ui-express": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "express": {
+      "optional": true
+    },
+    "swagger-ui-express": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": ">=4.0.0",
+    "morgan": "^1.10.1",
+    "multer": "^2.0.2",
+    "swagger-autogen": ">=2.23.0",
+    "swagger-ui-express": ">=4.0.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/jest": "^30.0.0",
+    "@types/morgan": "^1.9.10",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^24.5.2",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@typescript-eslint/eslint-plugin": "^8.44.0",
+    "@typescript-eslint/parser": "^8.44.0",
+    "eslint": "^9.35.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "jest": "^30.3.0",
+    "nodemon": "^3.1.11",
+    "prettier": "^3.6.2",
+    "ts-jest": "^29.4.9",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.47.0"
+  }
+}

@@ -1,0 +1,427 @@
+{
+	"info": {
+		"_postman_id": "5fea33ea-cf34-4689-a759-7546e749a53a",
+		"name": "Swagger Automatic Example API",
+		"description": "Complete API collection for Swagger Automatic Example project with all routes and test cases",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34268168"
+	},
+	"item": [
+		{
+			"name": "Root",
+			"item": [
+				{
+					"name": "GET Hello World",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "Get the basic Hello World message from the root endpoint"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Hello API",
+			"item": [
+				{
+					"name": "GET Hello Message",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiBaseUrl}}/hello/",
+							"host": [
+								"{{apiBaseUrl}}"
+							],
+							"path": [
+								"hello",
+								""
+							]
+						},
+						"description": "Get a hello message with timestamp"
+					},
+					"response": []
+				},
+				{
+					"name": "POST Hello Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Doe\",\n    \"conter\": 1\n}"
+						},
+						"url": {
+							"raw": "{{apiBaseUrl}}/hello/",
+							"host": [
+								"{{apiBaseUrl}}"
+							],
+							"path": [
+								"hello",
+								""
+							]
+						},
+						"description": "Post a name and get a personalized hello message"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Counter API",
+			"item": [
+				{
+					"name": "reset counter",
+					"item": [
+						{
+							"name": "reset counter (0)",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{apiBaseUrl}}/counter/0",
+									"host": [
+										"{{apiBaseUrl}}"
+									],
+									"path": [
+										"counter",
+										"0"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "reset counter (reset)",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{apiBaseUrl}}/counter/reset",
+									"host": [
+										"{{apiBaseUrl}}"
+									],
+									"path": [
+										"counter",
+										"reset"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "reset counter (zero)",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{apiBaseUrl}}/counter/reset",
+									"host": [
+										"{{apiBaseUrl}}"
+									],
+									"path": [
+										"counter",
+										"reset"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "GET Counter Value",
+					"item": [
+						{
+							"name": "GET Counter Value",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{apiBaseUrl}}/counter/",
+									"host": [
+										"{{apiBaseUrl}}"
+									],
+									"path": [
+										"counter",
+										""
+									]
+								},
+								"description": "Get the current counter value"
+							},
+							"response": []
+						},
+						{
+							"name": "GET Counter Value (Alternative)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{apiBaseUrl}}/counter/get",
+									"host": [
+										"{{apiBaseUrl}}"
+									],
+									"path": [
+										"counter",
+										"get"
+									]
+								},
+								"description": "Get the current counter value using alternative path"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Increment Counter",
+					"item": [
+						{
+							"name": "Increment Counter (inc)",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{apiBaseUrl}}/counter/inc",
+									"host": [
+										"{{apiBaseUrl}}"
+									],
+									"path": [
+										"counter",
+										"inc"
+									]
+								},
+								"description": "Increment the counter by 1"
+							},
+							"response": []
+						},
+						{
+							"name": "Increment Counter (plus)",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{apiBaseUrl}}/counter/plus",
+									"host": [
+										"{{apiBaseUrl}}"
+									],
+									"path": [
+										"counter",
+										"plus"
+									]
+								},
+								"description": "Increment the counter by 1 using 'plus' path"
+							},
+							"response": []
+						},
+						{
+							"name": "Increment Counter (+)",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{apiBaseUrl}}/counter/+",
+									"host": [
+										"{{apiBaseUrl}}"
+									],
+									"path": [
+										"counter",
+										"+"
+									]
+								},
+								"description": "Increment the counter by 1 using '+' path"
+							},
+							"response": []
+						},
+						{
+							"name": "Increment Counter (add)",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{apiBaseUrl}}/counter/add",
+									"host": [
+										"{{apiBaseUrl}}"
+									],
+									"path": [
+										"counter",
+										"add"
+									]
+								},
+								"description": "Increment the counter by 1 using '+' path"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Decrement Counter",
+					"item": [
+						{
+							"name": "Decrement Counter (dec)",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{apiBaseUrl}}/counter/dec",
+									"host": [
+										"{{apiBaseUrl}}"
+									],
+									"path": [
+										"counter",
+										"dec"
+									]
+								},
+								"description": "Decrement the counter by 1"
+							},
+							"response": []
+						},
+						{
+							"name": "Decrement Counter (minus)",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{apiBaseUrl}}/counter/minus",
+									"host": [
+										"{{apiBaseUrl}}"
+									],
+									"path": [
+										"counter",
+										"minus"
+									]
+								},
+								"description": "Decrement the counter by 1 using 'minus' path"
+							},
+							"response": []
+						},
+						{
+							"name": "Decrement Counter (-)",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{apiBaseUrl}}/counter/-",
+									"host": [
+										"{{apiBaseUrl}}"
+									],
+									"path": [
+										"counter",
+										"-"
+									]
+								},
+								"description": "Decrement the counter by 1 using '-' path"
+							},
+							"response": []
+						},
+						{
+							"name": "Decrement Counter (sub)",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{apiBaseUrl}}/counter/sub",
+									"host": [
+										"{{apiBaseUrl}}"
+									],
+									"path": [
+										"counter",
+										"sub"
+									]
+								},
+								"description": "Decrement the counter by 1 using '-' path"
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "API Documentation",
+			"item": [
+				{
+					"name": "Swagger UI",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api-docs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api-docs"
+							]
+						},
+						"description": "Access the Swagger UI documentation"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Add timestamp to request if needed",
+					"console.log('Making request to:', pm.request.url.toString());"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Basic response validation",
+					"pm.test('Status code is not 500', function () {",
+					"    pm.response.to.not.have.status(500);",
+					"});",
+					"",
+					"pm.test('Response time is less than 1000ms', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(1000);",
+					"});",
+					"",
+					"pm.test('Response has timestamp', function () {",
+					"    var jsonData = pm.response.json();",
+					"    pm.expect(jsonData).to.have.property('timeStamp');",
+					"});",
+					"",
+					"// Log response details",
+					"console.log('Response status:', pm.response.code);",
+					"console.log('Response time:', pm.response.responseTime + 'ms');"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "apiBaseUrl",
+			"value": "http://localhost:3000/api",
+			"type": "string"
+		}
+	]
+}

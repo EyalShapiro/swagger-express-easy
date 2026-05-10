@@ -1,0 +1,23 @@
+# Source TypeScript (consumers get dist/ only)
+src/
+
+# Example app artifacts
+tools/
+nodemon.json
+
+# Dev / config files
+.env
+.env.*
+.eslintrc.json
+.eslintignore
+.prettierrc
+.prettierignore
+tsconfig.json
+
+# Git & CI
+.git/
+.github/
+
+# Node internals
+node_modules/
+npm-debug.log*
