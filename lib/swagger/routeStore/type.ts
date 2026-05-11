@@ -44,7 +44,12 @@ export type SwaggerRouteDefinition = {
   consumes?: string[];
   /** Media types the API can produce (e.g. ['application/json']) */
   produces?: string[];
+  /** Single tag for this route (convenience) */
+  tag?: string;
   /** List of tags for this route */
   tags?: string[];
+  /** Expected HTTP responses (status code mapping) */
+  responses?: Record<number | string, { description?: string, schema?: any } & Record<string, any>>;
 };
+
 

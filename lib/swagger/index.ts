@@ -1,6 +1,6 @@
 import { Express, Request, Response, NextFunction } from 'express';
 import swaggerUi from 'swagger-ui-express';
-import { Server } from 'http';
+import http from 'http';
 import { generateSwaggerDocs } from './swaggerAuto';
 import { readSwaggerFile } from './utils/functions';
 import { SwaggerConfigOptions, buildSwaggerConfig } from './swagger.config';
@@ -72,9 +72,13 @@ export class SwaggerAuto {
     const config = buildSwaggerConfig(this.options);
     const swaggerPath = this.options.path!;
     const customSwaggerHandler = (req: Request, res: Response, next: NextFunction) => {
-      const swaggerControls = swaggerUi.setup(this.swaggerDocument, this.options.swaggerUiOptions);
+      const uiOptions: swaggerUi.SwaggerUiOptions = {
+        ...this.options?.swaggerUiOptions,
+      };
+      const swaggerControls = swaggerUi.setup(this.swaggerDocument, uiOptions);
       return swaggerControls(req, res, next);
     };
+
     if (this.options.watch) {
       // In watch mode, regenerate the doc on every request to the swagger path
       this.app.use(swaggerPath, async (_req: Request, _res: Response, next: NextFunction) => {
@@ -92,8 +96,7 @@ export class SwaggerAuto {
       this.app.use(swaggerPath, swaggerUi.serve, customSwaggerHandler);
     } else {
       // Standard mode — generate once or read from disk
-      this.swaggerDocument =
-        (await readSwaggerFile().catch(() => null)) ?? (await generateSwaggerDocs(config));
+      this.swaggerDocument = await getSwaggerDocument(this.options);
 
       this.app.use(swaggerPath, swaggerUi.serve, customSwaggerHandler);
     }
@@ -109,29 +112,22 @@ export class SwaggerAuto {
    * Automatically detects the listening port and host, and updates the
    * Swagger documentation with the correct server URL.
    *
-   * @param {Server} server - The HTTP server instance.
+   * @param {http.Server} server - The HTTP server instance.
    * @example
    * const server = http.createServer(app);
    * swagger.useServer(server);
    * server.listen(PORT);
    */
-  /**
-   * Binds the SwaggerAuto instance to a running HTTP server.
-   * Automatically detects the listening port and host, and updates the 
-   * Swagger documentation with the correct server URL.
-   * 
-   * @param {Server} server - The HTTP server instance.
-   */
-  useServer(server: Server) {
+  useServer(server: http.Server) {
     server.on('listening', () => {
       const addr = server.address();
       if (addr && typeof addr === 'object') {
         const port = addr.port;
         const host = addr.address === '::' ? 'localhost' : addr.address;
-        
+
         if (this.swaggerDocument) {
           this.swaggerDocument.servers = [
-            { url: `http://${host}:${port}`, description: 'Auto-detected server' }
+            { url: `http://${host}:${port}`, description: 'Auto-detected server' },
           ];
           this.swaggerDocument.host = `${host}:${port}`;
         }
@@ -143,39 +139,41 @@ export class SwaggerAuto {
   /**
    * Starts the Express server and automatically binds Swagger detection and error handling.
    * This is the easiest way to start your application.
-   * 
+   *
    * @param {number | string} port - The port to listen on.
    * @param {() => void} [callback] - Optional callback when the server starts.
-   * @returns {Server} The Node.js Server instance.
-   * 
+   * @returns {{ server: http.Server; app: Express; port: number | string }} An object containing the server, app, and port.
+   *
    * @example
-   * swagger.listen(3000, () => console.log('Ready!'));
+   * const { server, port } = swagger.listen(3000);
    */
-  listen(port: number | string, callback?: () => void): Server {
+  listen(
+    port: number | string,
+    callback?: () => void,
+  ): { server: http.Server; app: Express; port: number | string } {
     const server = this.app.listen(port, callback);
     this.useServer(server);
     SwaggerAuto.handleServerErrors(server, port);
-    return server;
+    return { server, app: this.app, port };
   }
-
 
   /**
    * Utility to handle common server errors like port already in use (EADDRINUSE).
    * Automatically exits the process with code 1 if the port is busy,
    * allowing tools like nodemon to restart the process cleanly.
    *
-   * @param {Server} server - The Node.js HTTP server instance.
+   * @param {http.Server} server - The Node.js HTTP server instance.
    * @param {string | number} port - The port number or pipe string.
    */
-  static handleServerErrors(server: Server, port: string | number) {
-    server.on('error', (error: unknown) => {
-      if ((error as { code?: string })?.code === 'EADDRINUSE') {
+  static handleServerErrors(server: http.Server, port: string | number) {
+    server.on('error', (error: any) => {
+      if (error?.code === 'EADDRINUSE') {
         console.error(
           `\x1b[33m[swagger-express-easy] Port ${port} is already in use. Exiting to allow restart...\x1b[0m`,
         );
         process.exit(1);
       }
-      console.error('\x1b[31m[swagger-express-easy] Server error:\x1b[0m', error);
+      console.error(`\x1b[31m[swagger-express-easy] Server Error on port ${port}:\x1b[0m`, error);
     });
   }
 }
@@ -187,6 +185,10 @@ export class SwaggerAuto {
  * @param {Express} app - The Express application.
  * @param {SwaggerSetupOptions} [options={}] - Setup options.
  * @returns {Promise<{ path: string; document: any }>} Setup results.
+ *
+ * @example
+ * import { setupSwagger } from 'swagger-express-easy';
+ * await setupSwagger(app, { watch: true, path: '/docs' });
  */
 export async function setupSwagger(app: Express, options: SwaggerSetupOptions = {}) {
   const instance = new SwaggerAuto(app, options);
@@ -199,6 +201,10 @@ export async function setupSwagger(app: Express, options: SwaggerSetupOptions = 
  *
  * @param {SwaggerConfigOptions} [configOptions] - Configuration options.
  * @returns {Promise<any>} The generated Swagger document.
+ *
+ * @example
+ * const doc = await getSwaggerDocument({ port: 3000 });
+ * console.log(doc.paths);
  */
 export async function getSwaggerDocument(configOptions?: SwaggerConfigOptions) {
   const config = buildSwaggerConfig(configOptions);
@@ -210,7 +216,12 @@ export async function getSwaggerDocument(configOptions?: SwaggerConfigOptions) {
  *
  * @param {Server} server - The Server instance.
  * @param {string | number} port - The port.
+ *
+ * @example
+ * const server = http.createServer(app);
+ * handleServerErrors(server, PORT);
+ * server.listen(PORT);
  */
-export function handleServerErrors(server: Server, port: string | number) {
+export function handleServerErrors(server: http.Server, port: string | number) {
   SwaggerAuto.handleServerErrors(server, port);
 }

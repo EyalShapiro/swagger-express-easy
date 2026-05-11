@@ -1,61 +1,55 @@
 /**
  * Supported OpenAPI data types for schema properties.
  */
-export type SchemaPropertyType =
-  | 'string'
-  | 'integer'
-  | 'number'
-  | 'boolean'
-  | 'array'
-  | 'object';
+export type SchemaPropertyType = 'string' | 'integer' | 'number' | 'boolean' | 'array' | 'object';
 
 /**
  * Definition of a single property inside an OpenAPI schema.
  */
 export interface SchemaPropertyDef {
-  /** 
+  /**
    * The data type of the property.
    */
   type: SchemaPropertyType;
 
-  /** 
+  /**
    * Whether this property is required.
    * @default false
    */
   required?: boolean;
 
-  /** 
+  /**
    * OpenAPI format hint.
    * Examples: 'email', 'date-time', 'int64', 'uuid'.
    */
   format?: string;
 
-  /** 
+  /**
    * An example value for this property to be displayed in Swagger UI.
    */
   example?: any;
 
-  /** 
+  /**
    * A human-readable description of the property.
    */
   description?: string;
 
-  /** 
+  /**
    * For type: 'array' — defines the schema of the items within the array.
    */
   items?: { type: SchemaPropertyType } & Record<string, any>;
 
-  /** 
+  /**
    * For type: 'object' — defines the nested properties of the object.
    */
   properties?: Record<string, SchemaPropertyDef>;
 
-  /** 
+  /**
    * Possible enum values for the property.
    */
   enum?: any[];
 
-  /** 
+  /**
    * The default value for the property.
    */
   default?: any;
@@ -94,12 +88,12 @@ export class SchemaManager {
 
   /**
    * Defines and registers a new schema.
-   * 
+   *
    * @param {string} name - The unique name of the schema (e.g., 'User').
    * @param {Record<string, SchemaPropertyDef>} properties - Map of property names to their definitions.
    * @param {string} [description] - Optional description for the entire schema.
    * @returns {OpenAPISchema} The registered schema object.
-   * 
+   *
    * @example
    * defineSchema('User', {
    *   id: { type: 'integer', required: true, example: 1 },
@@ -146,7 +140,7 @@ export class SchemaManager {
 
   /**
    * Helper to create an OpenAPI $ref string for a registered schema.
-   * 
+   *
    * @param {string} name - The name of the schema.
    * @returns {string} The reference string (e.g., '#/components/schemas/User').
    */
@@ -179,9 +173,71 @@ export const defineSchema = (
 ) => manager.define(name, properties, description);
 
 /**
+ * Defines a new reusable schema (Entity) with strong TypeScript typing.
+ * This ensures that the schema definition matches your TypeScript interface/type.
+ *
+ * @example
+ * interface User {
+ *   id: number;
+ *   name: string;
+ * }
+ *
+ * defineEntity<User>('User', {
+ *   id: { type: 'integer', required: true, example: 1 },
+ *   name: { type: 'string', required: true, example: 'John Doe' }
+ * });
+ */
+export function defineEntity<T>(
+  name: string,
+  properties: { [K in keyof T]: SchemaPropertyDef },
+  description?: string,
+): OpenAPISchema {
+  return manager.define(name, properties as any, description);
+}
+
+/**
+ * Automatically defines a schema by inferring types from a JavaScript example object.
+ * This is the easiest way to build an "entity" based on your actual data structure.
+ * 
+ * @example
+ * const exampleUser = { id: 1, name: 'John', isActive: true };
+ * defineEntityFromExample('User', exampleUser, 'A user entity inferred from example');
+ */
+export function defineEntityFromExample<T extends object>(
+  name: string,
+  example: T,
+  description?: string,
+): OpenAPISchema {
+  const properties: Record<string, SchemaPropertyDef> = {};
+
+  for (const [key, value] of Object.entries(example)) {
+    const jsType = typeof value;
+    let swaggerType: SchemaPropertyType = 'string';
+
+    if (jsType === 'number') {
+      swaggerType = Number.isInteger(value) ? 'integer' : 'number';
+    } else if (jsType === 'boolean') {
+      swaggerType = 'boolean';
+    } else if (Array.isArray(value)) {
+      swaggerType = 'array';
+    } else if (value !== null && jsType === 'object') {
+      swaggerType = 'object';
+    }
+
+    properties[key] = {
+      type: swaggerType,
+      example: value,
+      required: true,
+    };
+  }
+
+  return manager.define(name, properties, description);
+}
+
+/**
  * Generates a reference to a registered schema.
  * Use this in route definitions for request bodies or responses.
- * 
+ *
  * @example
  * createSwaggerRoute({
  *   path: '/users',

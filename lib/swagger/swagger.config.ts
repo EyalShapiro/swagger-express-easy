@@ -53,6 +53,18 @@ export interface SwaggerConfigOptions {
   openapi?: string;
   /** Whether to automatically include JWT Bearer Auth in the specification. @default true */
   bearerAuth?: boolean;
+  /** Security definitions (Swagger 2.0) or Security Schemes (OpenAPI 3.0) */
+  securityDefinitions?: Record<string, any>;
+  /** Global security requirements applied to all routes */
+  security?: Array<Record<string, string[]>>;
+  /** Global model definitions */
+  definitions?: Record<string, any>;
+  /** Global tags with descriptions */
+  tags?: Array<{ name: string; description?: string }>;
+  /** Global media types the API consumes */
+  consumes?: string[];
+  /** Global media types the API produces */
+  produces?: string[];
   /** Raw access to the underlying Swagger configuration object. */
   raw?: SwaggerOptions;
 }
@@ -80,25 +92,32 @@ export function buildSwaggerConfig(options: SwaggerConfigOptions = {}) {
     { description: 'Local development', url: `http://${host}` },
   ];
 
-  const components: SwaggerOptions['components'] =
-    options.bearerAuth !== false
-      ? {
-          securitySchemes: {
+  const components: SwaggerOptions['components'] = {
+    securitySchemes: {
+      ...(options.bearerAuth !== false
+        ? {
             bearerAuth: {
               type: 'http',
               scheme: 'bearer',
               bearerFormat: 'JWT',
               description: 'Enter JWT token',
             },
-          },
-        }
-      : undefined;
+          }
+        : {}),
+      ...(options.securityDefinitions || {}),
+    },
+  };
 
   const document: SwaggerOptions = {
     openapi: options.openapi ?? '3.0.3',
     info,
     servers,
-    ...(components ? { components, security: [{ bearerAuth: [] }] } : {}),
+    components,
+    security: options.security ?? (options.bearerAuth !== false ? [{ bearerAuth: [] }] : []),
+    definitions: options.definitions,
+    tags: options.tags,
+    consumes: options.consumes,
+    produces: options.produces,
     schemes: ['http', 'https'],
     host: host,
     basePath: options.basePath ?? '/',
@@ -113,7 +132,7 @@ export function buildSwaggerConfig(options: SwaggerConfigOptions = {}) {
     port: options.port,
     host,
     outputFile: finalOutputFile,
-    endpointsRoutes: options.endpointsRoutes ?? ['./src/*.ts,.js'],
+    endpointsRoutes: [__filename, ...(options.endpointsRoutes ?? ['./src/*.ts,.js'])], //to add more files to scan add them to the endpointsRoutes array
     document,
   };
 }
