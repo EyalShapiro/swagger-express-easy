@@ -50,4 +50,3 @@ router.post('/', addMessage);
 router.delete('/', clearMessages);
 
 export default router;
-

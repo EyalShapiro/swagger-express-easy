@@ -107,7 +107,7 @@ export class SchemaManager {
   ): OpenAPISchema {
     const requiredFields: string[] = [];
     const cleanProps: Record<string, Omit<SchemaPropertyDef, 'required'>> = {};
-    const example: Record<string, any> = {};
+    const example: Record<string, string> = {};
 
     for (const [key, def] of Object.entries(properties)) {
       if (def.required) requiredFields.push(key);
@@ -192,13 +192,13 @@ export function defineEntity<T>(
   properties: { [K in keyof T]: SchemaPropertyDef },
   description?: string,
 ): OpenAPISchema {
-  return manager.define(name, properties as any, description);
+  return manager.define(name, properties, description);
 }
 
 /**
  * Automatically defines a schema by inferring types from a JavaScript example object.
  * This is the easiest way to build an "entity" based on your actual data structure.
- * 
+ *
  * @example
  * const exampleUser = { id: 1, name: 'John', isActive: true };
  * defineEntityFromExample('User', exampleUser, 'A user entity inferred from example');

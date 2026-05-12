@@ -15,6 +15,7 @@ This directory contains the source code for the `swagger-express-easy` library. 
 ## 🛠️ Development
 
 When making changes to the library:
+
 1. Ensure types are exported from the main `index.ts`.
 2. Add unit tests in `*.test.ts` files alongside the implementation.
 3. Use `npm run build` to verify compilation.
@@ -23,6 +24,7 @@ When making changes to the library:
 
 We use **Jest** for unit testing the core logic.
 Run tests with:
+
 ```bash
 npm test
 ```

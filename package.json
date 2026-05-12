@@ -1,6 +1,6 @@
 {
   "name": "swagger-express-easy",
-  "version": "1.1.2",
+  "version": "0.0.1",
   "description": "Auto-generated Swagger documentation using swagger-autogen",
   "license": "MIT",
   "author": "Eyal Shapiro",
@@ -38,8 +38,8 @@
     "prepublishOnly": "npm run build",
     "start": "node dist/src/app.js",
     "dev": "npm run swagger && nodemon",
-    "lint": "eslint '{src,lib}/**/*.{js,ts,tsx}' --fix",
-    "format": "prettier --write '{src,lib}/**/*.{ts,tsx}'",
+    "lint": "eslint src lib --fix",
+    "format": "prettier --write src lib",
     "swagger": "ts-node -r tsconfig-paths/register lib/swagger/start.ts",
     "exp": "node example/example.js"
   },

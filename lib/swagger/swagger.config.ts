@@ -1,4 +1,5 @@
 import path from 'path';
+import fs from 'fs';
 import { SwaggerOptions } from 'swagger-ui-express';
 import _pkg from './utils/_packageJsonData';
 
@@ -109,30 +110,39 @@ export function buildSwaggerConfig(options: SwaggerConfigOptions = {}) {
   };
 
   const document: SwaggerOptions = {
-    openapi: options.openapi ?? '3.0.3',
+    openapi: options?.openapi ?? '3.0.3',
     info,
     servers,
     components,
-    security: options.security ?? (options.bearerAuth !== false ? [{ bearerAuth: [] }] : []),
-    definitions: options.definitions,
-    tags: options.tags,
-    consumes: options.consumes,
-    produces: options.produces,
+    security: options?.security ?? (options.bearerAuth !== false ? [{ bearerAuth: [] }] : []),
+    definitions: options?.definitions,
+    tags: options?.tags,
+    consumes: options?.consumes,
+    produces: options?.produces,
     schemes: ['http', 'https'],
     host: host,
-    basePath: options.basePath ?? '/',
+    basePath: options?.basePath ?? '/',
     ...options.raw,
   };
 
-  const finalOutputFile = options.outputDir
-    ? path.join(options.outputDir, options.outputFile ?? 'swagger-output.json')
-    : (options.outputFile ?? 'tools/swagger-output.json');
+  const finalOutputFile = path.join(
+    options?.outputDir ?? process.cwd() ?? __dirname ?? '',
+    options?.outputFile ?? 'swagger-output.json',
+  );
+
+  // Default entry points to scan if none provided
+  const defaultEntries = ['./src/app.ts', './src/index.ts', './src/server.ts', './src/main.ts'];
+  const existingEntries = defaultEntries.filter((f) =>
+    fs.existsSync(path.resolve(process.cwd(), f)),
+  );
 
   return {
     port: options.port,
     host,
     outputFile: finalOutputFile,
-    endpointsRoutes: [__filename, ...(options.endpointsRoutes ?? ['./src/*.ts,.js'])], //to add more files to scan add them to the endpointsRoutes array
+    endpointsRoutes: (
+      options?.endpointsRoutes ?? (existingEntries.length > 0 ? existingEntries : ['./src/app.ts'])
+    ).filter((f) => fs.existsSync(path.resolve(process.cwd(), f))),
     document,
   };
 }

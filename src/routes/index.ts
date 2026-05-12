@@ -23,10 +23,13 @@ router.get('/math/v2/pi', mathController.getPi);
 router.post('/math/v2/square', mathController.getSquare);
 
 // 2. Using withSwagger wrapper for plain functions
-router.get('/ping', withSwagger(
-  { method: 'get', path: '/api/ping', description: { text: 'Check if API is alive' } },
-  (req: any, res: any) => res.json({ message: 'pong' })
-));
+router.get(
+  '/ping',
+  withSwagger(
+    { method: 'get', path: '/api/ping', description: { text: 'Check if API is alive' } },
+    (req, res) => res.json({ message: 'pong' }),
+  ),
+);
 
 router.use('/counter', counterRoutes);
 router.use('/hello', helloRoute);

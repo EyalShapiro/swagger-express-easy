@@ -11,7 +11,7 @@ import { getUrlHost } from '../utils/getUrlOrigins';
 
 export const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
-    if (ORIGINALS_OPTION.includes(getUrlHost(origin))) {
+    if (!origin || ORIGINALS_OPTION.includes(getUrlHost(origin))) {
       callback(null, true);
     } else {
       console.warn(`CORS policy does not allow access from origin: ${origin}`);

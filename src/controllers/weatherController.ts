@@ -1,10 +1,15 @@
 import { Request, Response } from 'express';
 
+interface WeatherReport {
+  temp: number;
+  condition: string;
+}
+
 // Mock data
-const weatherData: Record<string, any> = {
+const weatherData: Record<string, WeatherReport> = {
   london: { temp: 15, condition: 'Rainy' },
   telaviv: { temp: 28, condition: 'Sunny' },
-  newyork: { temp: 20, condition: 'Cloudy' }
+  newyork: { temp: 20, condition: 'Cloudy' },
 };
 
 export const getWeatherByCity = (req: Request, res: Response) => {
@@ -31,6 +36,6 @@ export const updateWeatherReport = (req: Request, res: Response) => {
 
   res.status(201).json({
     message: 'Weather report updated successfully',
-    updatedData: { city, temp, condition }
+    updatedData: { city, temp, condition },
   });
 };

@@ -15,14 +15,17 @@ This directory contains a full-blown Express application demonstrating how to us
 ## 💡 Key Examples
 
 ### File Uploads
+
 See [fileUploads.ts](./routes/fileUploads.ts) to see how to use the `consumes` field and `formData` parameters to document file uploads.
 
 ### Schemas & References
+
 See [messageBoard.ts](./routes/messageBoard.ts) to see how `defineSchema` and `schemaRef` work together to create clean, reusable documentation.
 
 ## 🏃 Running the Example
 
 Start the development server with hot-reload:
+
 ```bash
 npm run dev
 ```

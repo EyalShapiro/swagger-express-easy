@@ -40,7 +40,7 @@ export {
   updateSwaggerFile,
   checkSwaggerFile,
   normalizePath,
-  SWAGGER_FILE_PATH,
+  getSwaggerFilePath,
 } from './swagger/utils/functions';
 
 // --- Generation ---

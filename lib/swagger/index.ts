@@ -1,5 +1,5 @@
 import { Express, Request, Response, NextFunction } from 'express';
-import swaggerUi from 'swagger-ui-express';
+import swaggerUi, { JsonObject } from 'swagger-ui-express';
 import http from 'http';
 import { generateSwaggerDocs } from './swaggerAuto';
 import { readSwaggerFile } from './utils/functions';
@@ -50,7 +50,7 @@ export interface SwaggerSetupOptions extends SwaggerConfigOptions {
 export class SwaggerAuto {
   private app: Express;
   private options: SwaggerSetupOptions;
-  private swaggerDocument: any = null;
+  private swaggerDocument: JsonObject | null = null;
 
   /**
    * Creates an instance of SwaggerAuto.
@@ -72,6 +72,7 @@ export class SwaggerAuto {
     const config = buildSwaggerConfig(this.options);
     const swaggerPath = this.options.path!;
     const customSwaggerHandler = (req: Request, res: Response, next: NextFunction) => {
+      if (res.headersSent) return;
       const uiOptions: swaggerUi.SwaggerUiOptions = {
         ...this.options?.swaggerUiOptions,
       };
@@ -208,7 +209,10 @@ export async function setupSwagger(app: Express, options: SwaggerSetupOptions = 
  */
 export async function getSwaggerDocument(configOptions?: SwaggerConfigOptions) {
   const config = buildSwaggerConfig(configOptions);
-  return (await readSwaggerFile().catch(() => null)) ?? (await generateSwaggerDocs(config));
+  return (
+    (await readSwaggerFile(config.outputFile).catch(() => null)) ??
+    (await generateSwaggerDocs(config))
+  );
 }
 
 /**

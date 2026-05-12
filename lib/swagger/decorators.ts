@@ -1,4 +1,5 @@
-import { Request, Response, NextFunction, RequestHandler } from 'express';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { RequestHandler } from 'express';
 import * as core from 'express-serve-static-core';
 
 import { createSwaggerRoute } from './routeStore';
@@ -27,10 +28,17 @@ export function SwaggerRoute(routeDef: SwaggerRouteDefinition) {
  * @example
  * export const getHello = withSwagger({ method: 'get', path: '/api/hello' }, (req, res) => { ... });
  */
-export function withSwagger<T extends Function>(routeDef: SwaggerRouteDefinition, handler: T): T {
-  createSwaggerRoute(routeDef);
-  return handler;
-}
+
+export function withSwagger<
+  P = core.ParamsDictionary,
+  ResBody = any,
+  ReqBody = any,
+  ReqQuery = core.Query,
+  Locals extends Record<string, any> = Record<string, any>,
+>(
+  routeDef: SwaggerRouteDefinition,
+  handler: RequestHandler<P, ResBody, ReqBody, ReqQuery, Locals>,
+): RequestHandler<P, ResBody, ReqBody, ReqQuery, Locals>;
 
 /**
  * A strongly-typed wrapper for Express route handlers.
@@ -38,14 +46,14 @@ export function withSwagger<T extends Function>(routeDef: SwaggerRouteDefinition
  * while automatically registering the route to Swagger.
  *
  * @example
- * export const calculate = withTypedSwagger<{ expression: string }>(
+ * export const calculate = withSwagger<{ expression: string }>(
  *   { method: 'post', path: '/calculate' },
  *   (req, res) => {
  *     console.log(req.body.expression); // Fully typed!
  *   }
  * );
  */
-export function withTypedSwagger<
+export function withSwagger<
   T extends SwaggerRouteDefinition,
   Params = core.ParamsDictionary,
   ResBody = any,
@@ -56,11 +64,17 @@ export function withTypedSwagger<
   handler: RequestHandler<
     Params,
     ResBody,
-    T['body'] extends { default: infer D } ? D : (T['body'] extends undefined ? any : T['body']),
+    T['body'] extends { default: infer D } ? D : T['body'] extends undefined ? any : T['body'],
     ReqQuery,
     Locals
   >,
-) {
+): RequestHandler<
+  Params,
+  ResBody,
+  T['body'] extends { default: infer D } ? D : T['body'] extends undefined ? any : T['body'],
+  ReqQuery,
+  Locals
+> {
   createSwaggerRoute(routeDef);
   return handler;
 }

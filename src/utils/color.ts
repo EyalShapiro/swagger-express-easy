@@ -219,7 +219,7 @@ class Logger {
     return this;
   }
 
-  fontColorLog(ticket: string, text: string, setting: any) {
+  fontColorLog(ticket: string, text: string, setting: { [x: string]: boolean }) {
     let command = '';
     if (setting) {
       command += this.checkSetting(setting);
@@ -236,7 +236,7 @@ class Logger {
     this._print(command);
   }
 
-  bgColorLog(ticket: string, text: string, setting: any) {
+  bgColorLog(ticket: string, text: string, setting: { [x: string]: boolean }) {
     let command = '';
     if (setting) {
       command += this.checkSetting(setting);
@@ -253,7 +253,11 @@ class Logger {
     this._print(command);
   }
 
-  colorLog(ticketObj: { font: string; bg: string }, text: string, setting: any) {
+  colorLog(
+    ticketObj: { font: string; bg: string },
+    text: string,
+    setting: { [x: string]: boolean },
+  ) {
     let command = '';
     if (setting) {
       command += this.checkSetting(setting);
@@ -277,6 +281,7 @@ class Logger {
     this._print(command);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error(...args: any[]) {
     if (!this.isAllowedLevel('error')) return;
 
@@ -295,6 +300,7 @@ class Logger {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   warn(...args: any[]) {
     if (!this.isAllowedLevel('warn')) return;
 
@@ -314,6 +320,7 @@ class Logger {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   info(...args: any[]) {
     if (!this.isAllowedLevel('info')) return;
 
@@ -333,6 +340,7 @@ class Logger {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   debug(...args: any[]) {
     if (!this.isAllowedLevel('debug')) return;
 
@@ -352,6 +360,7 @@ class Logger {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   success(...args: any[]) {
     if (!this.isAllowedLevel('success')) return;
 
@@ -436,8 +445,8 @@ function getFileAndLine(isShortFile = false) {
   }
 
   // find ( and ) in the line from the end
-  let start = line.lastIndexOf('(');
-  let end = line.lastIndexOf(')');
+  const start = line.lastIndexOf('(');
+  const end = line.lastIndexOf(')');
   if (start === -1 || end === -1 || start >= end) {
     return '';
   }

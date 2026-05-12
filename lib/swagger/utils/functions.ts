@@ -23,41 +23,45 @@ function parseJson<T extends object | unknown[]>(
 }
 
 /**
- * Absolute path to the generated Swagger/OpenAPI JSON file.
- * Uses process.cwd() → always points to project root, works perfectly with:
- * - ts-node (dev)
- * - compiled JS in dist (production)
- * - Docker, PM2, Vercel, etc.
+ * Returns the absolute path to the generated Swagger/OpenAPI JSON file.
+ * We use a function to avoid top-level circular dependency issues with SWAGGER_CONFIG.
  */
-export const SWAGGER_FILE_PATH =
-  path.resolve(process.cwd(), SWAGGER_CONFIG.outputFile) || SWAGGER_CONFIG.outputFile;
+export function getSwaggerFilePath(): string {
+  return path.resolve(process.cwd(), SWAGGER_CONFIG?.outputFile || 'swagger-output.json');
+}
+
 /**
  * Checks whether the Swagger JSON file exists on disk
  *
  * @param filePath - Optional absolute or relative path (defaults to config)
  * @returns {boolean} true if file exists, false otherwise
  */
-export const checkSwaggerFile = (filePath: string = SWAGGER_FILE_PATH): boolean =>
+export const checkSwaggerFile = (filePath: string = getSwaggerFilePath()): boolean =>
   fs.existsSync(filePath);
+
 /**
  * Reads and safely parses the Swagger/OpenAPI JSON file from disk
  *
  * @param {string} filePath  - Optional custom path (defaults to config-defined file)
- * @returns {Promise<JsonObject>} Parsed Swagger document as JsonObject
- * @throws If file doesn't exist or JSON is invalid
+ * @returns {Promise<JsonObject>} Parsed Swagger document as JsonObject. Returns {} if file doesn't exist.
  */
-export async function readSwaggerFile(filePath: string = SWAGGER_FILE_PATH): Promise<JsonObject> {
+export async function readSwaggerFile(
+  filePath: string = getSwaggerFilePath(),
+): Promise<JsonObject> {
   try {
-    if (!checkSwaggerFile(filePath)) {
-      throw new Error(`Swagger output file does not exist. "${filePath}"`);
+    if (!fs.existsSync(filePath)) {
+      // If file doesn't exist, return empty object instead of throwing
+      return {} as JsonObject;
     }
     const fileData = await fsPromises.readFile(filePath, { encoding: 'utf-8' });
-
-    const jsonSD = parseJson(fileData); //the swagger document json data
+    const jsonSD = parseJson(fileData);
     return jsonSD as JsonObject;
   } catch (error) {
-    console.error('Error reading Swagger file:', error);
-    throw error;
+    // Only log if the file actually exists but failed to read/parse
+    if (fs.existsSync(filePath)) {
+      console.error('Error reading Swagger file:', error);
+    }
+    return {} as JsonObject;
   }
 }
 
@@ -66,16 +70,21 @@ export async function readSwaggerFile(filePath: string = SWAGGER_FILE_PATH): Pro
  * Synchronously writes – suitable for startup/build time
  *
  * @param {JsonObject} swaggerDocument - Complete OpenAPI object to save
- * @param {string} fullPath=SWAGGER_FILE_PATH - Optional custom path
+ * @param {string} filePath=getSwaggerFilePath() - Optional custom path
  */
 export async function updateSwaggerFile(
   swaggerDocument: JsonObject,
-  filePath: string = SWAGGER_FILE_PATH,
+  filePath: string = getSwaggerFilePath(),
 ) {
   try {
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) {
       await fsPromises.mkdir(dir, { recursive: true });
+    }
+
+    // Ensure the document has a valid OpenAPI/Swagger version if missing
+    if (!swaggerDocument.openapi && !swaggerDocument.swagger) {
+      swaggerDocument.openapi = '3.0.3';
     }
 
     await fsPromises.writeFile(filePath, JSON.stringify(swaggerDocument, null, 2), 'utf-8');
@@ -85,6 +94,7 @@ export async function updateSwaggerFile(
     throw error;
   }
 }
+
 /**
  * Standardizes a path string to ensure it starts with a '/' and has no trailing '/'.
  * @param {string} path The path string to normalize.

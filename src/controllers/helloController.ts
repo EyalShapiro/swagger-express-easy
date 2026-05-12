@@ -20,7 +20,7 @@ export const getHello = withSwagger(
       const statusCode = 500;
       res.status(statusCode).json({ message: ERROR_MSG.internal, statusCode, error });
     }
-  }
+  },
 );
 export const getHelloById = (req: Request, res: Response) => {
   try {

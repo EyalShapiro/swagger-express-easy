@@ -11,8 +11,8 @@ createSwaggerRoute({
   tags: ['Data Management'],
   produces: ['text/plain'],
   responses: {
-    200: { description: 'Plain text log file' }
-  }
+    200: { description: 'Plain text log file' },
+  },
 });
 router.get('/export/text', (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'text/plain');
@@ -27,8 +27,8 @@ createSwaggerRoute({
   tags: ['Data Management'],
   produces: ['text/csv'],
   responses: {
-    200: { description: 'CSV file download' }
-  }
+    200: { description: 'CSV file download' },
+  },
 });
 router.get('/export/csv', (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'text/csv');
@@ -48,25 +48,25 @@ createSwaggerRoute({
     type: 'object',
     properties: {
       query: { type: 'string', example: 'Eyal' },
-      limit: { type: 'number', example: 10 }
+      limit: { type: 'number', example: 10 },
     },
-    required: ['query']
+    required: ['query'],
   },
   responses: {
     200: { description: 'Search results' },
-    400: { description: 'Missing query parameter' }
-  }
+    400: { description: 'Missing query parameter' },
+  },
 });
 router.post('/search', (req: Request, res: Response) => {
   const { query, limit = 10 } = req.body;
   if (!query) {
     return res.status(400).json({ error: 'Search query is required' });
   }
-  
+
   res.json({
     message: `Search successful for '${query}'`,
     results: [{ id: 1, match: query }],
-    limitApplied: limit
+    limitApplied: limit,
   });
 });
 

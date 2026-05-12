@@ -28,16 +28,15 @@ export function createErrorJson(req: Request, res: Response, statusCode: number,
  * @param {Error} error - The error object.
  * @param {Request} req - The Express request object.
  * @param {Response} res - The Express response object.
- * @param {NextFunction} next - The next middleware function.
+ * @param {NextFunction} _next - The next middleware function.
  */
-export function errorHandler(error: Error, req: Request, res: Response, next: NextFunction) {
+export function errorHandler(error: Error, req: Request, res: Response) {
   const message = `Error: ${error?.message || ERROR_MSG.internal}`;
   const statusCode = 500;
   if (!IS_PROD) console.error(error);
   const errJson = { ...createErrorJson(req, res, statusCode, message), error };
 
   res.status(statusCode).json(errJson);
-  next();
 }
 
 /**

@@ -1,4 +1,5 @@
 import path from 'path';
+import fs from 'fs';
 import { JsonObject } from 'swagger-ui-express';
 import swaggerAutogen from 'swagger-autogen';
 import { SWAGGER_CONFIG, SwaggerConfigOptions } from './swagger.config';
@@ -27,6 +28,12 @@ export async function generateSwaggerDocs(
       i = (i + 1) % FRAMES.length;
     }, 80);
 
+    // Ensure the output directory exists before generation
+    const dir = path.dirname(fullPath);
+    if (!fs.existsSync(dir)) {
+      await fs.promises.mkdir(dir, { recursive: true });
+    }
+
     // Generate the base swagger documentation file from API endpoints.
     await swaggerAutogen({ openapi: '3.0.3', autoHeaders: true, autoBody: true })(
       fullPath,
@@ -34,7 +41,7 @@ export async function generateSwaggerDocs(
       swaggerConfig.document,
     );
 
-    const swaggerDocument = await applyCustomRouteDescriptions(fullPath);
+    const swaggerDocument = await applyCustomRouteDescriptions(fullPath, swaggerConfig.basePath);
 
     // Inject registered schemas into components.schemas
     const schemas = getRegisteredSchemas();
@@ -47,7 +54,7 @@ export async function generateSwaggerDocs(
     }
 
     // Organize tags for all paths.
-    const organizedSwaggerDoc = organizeSwaggerTags(swaggerDocument);
+    const organizedSwaggerDoc = organizeSwaggerTags(swaggerDocument, swaggerConfig.basePath);
 
     // Write the final, updated swagger document once.
     await updateSwaggerFile(organizedSwaggerDoc, fullPath);
