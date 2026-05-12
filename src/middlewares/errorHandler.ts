@@ -46,8 +46,8 @@ export function errorHandler(error: Error, req: Request, res: Response) {
  * @param {Response} res - The Express response object.
  * @param {NextFunction} next - The next middleware function.
  */
-export function notFound404Handle(req: Request, res: Response, next: NextFunction) {
-  if (req.path.startsWith('/api-docs') && !IS_PROD) return next(); // Allow swagger-ui assets and JSON through
+export function notFound404Handle(req: Request, res: Response) {
+  // if (req.path.startsWith('/api-docs') && !IS_PROD) return next(); // Allow swagger-ui assets and JSON through
 
   const statusCode = 404;
   const message = ERROR_MSG.notFound;

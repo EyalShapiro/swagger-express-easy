@@ -6,7 +6,7 @@ export type SchemaPropertyType = 'string' | 'integer' | 'number' | 'boolean' | '
 /**
  * Definition of a single property inside an OpenAPI schema.
  */
-export interface SchemaPropertyDef {
+export interface SchemaPropertyDef<T = unknown> {
   /**
    * The data type of the property.
    */
@@ -27,7 +27,7 @@ export interface SchemaPropertyDef {
   /**
    * An example value for this property to be displayed in Swagger UI.
    */
-  example?: any;
+  example?: T;
 
   /**
    * A human-readable description of the property.
@@ -107,7 +107,7 @@ export class SchemaManager {
   ): OpenAPISchema {
     const requiredFields: string[] = [];
     const cleanProps: Record<string, Omit<SchemaPropertyDef, 'required'>> = {};
-    const example: Record<string, string> = {};
+    const example: Record<string, unknown> = {};
 
     for (const [key, def] of Object.entries(properties)) {
       if (def.required) requiredFields.push(key);

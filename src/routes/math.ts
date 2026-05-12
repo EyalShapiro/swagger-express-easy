@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { withSwagger } from 'swagger-express-easy/swagger/decorators';
+import { withSwagger } from 'swagger-express-easy';
 
 const router = Router();
 

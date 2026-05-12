@@ -1,34 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { RequestHandler } from 'express';
 import * as core from 'express-serve-static-core';
-
-import { createSwaggerRoute } from './routeStore';
-import { SwaggerRouteDefinition } from './routeStore/type';
-
-/**
- * Class Method Decorator for Swagger Documentation.
- * Use this if you are using ES6 Classes for your controllers.
- *
- * @example
- * class UserController {
- *   \@SwaggerRoute({ method: 'get', path: '/api/users', description: { text: 'Get users' } })
- *   getUsers(req: Request, res: Response) { ... }
- * }
- */
-export function SwaggerRoute(routeDef: SwaggerRouteDefinition) {
-  return function (target: any, propertyKey?: any, descriptor?: any) {
-    createSwaggerRoute(routeDef);
-    return descriptor || target;
-  };
-}
+import { RequestHandler } from 'express';
+import { SwaggerRouteDefinition, createSwaggerRoute } from './routeStore';
 
 /**
- * Wrapper function for standard Express route handlers (since TS doesn't support decorators on plain functions).
- *
- * @example
- * export const getHello = withSwagger({ method: 'get', path: '/api/hello' }, (req, res) => { ... });
+ * Wrapper function for standard Express route handlers.
  */
-
 export function withSwagger<
   P = core.ParamsDictionary,
   ResBody = any,
@@ -38,22 +15,15 @@ export function withSwagger<
 >(
   routeDef: SwaggerRouteDefinition,
   handler: RequestHandler<P, ResBody, ReqBody, ReqQuery, Locals>,
-): RequestHandler<P, ResBody, ReqBody, ReqQuery, Locals>;
+): RequestHandler<P, ResBody, ReqBody, ReqQuery, Locals> {
+  createSwaggerRoute(routeDef);
+  return handler;
+}
 
 /**
  * A strongly-typed wrapper for Express route handlers.
- * Allows you to define TypeScript interfaces for Body, Query, and Params,
- * while automatically registering the route to Swagger.
- *
- * @example
- * export const calculate = withSwagger<{ expression: string }>(
- *   { method: 'post', path: '/calculate' },
- *   (req, res) => {
- *     console.log(req.body.expression); // Fully typed!
- *   }
- * );
  */
-export function withSwagger<
+export function withTypedSwagger<
   T extends SwaggerRouteDefinition,
   Params = core.ParamsDictionary,
   ResBody = any,
@@ -64,17 +34,21 @@ export function withSwagger<
   handler: RequestHandler<
     Params,
     ResBody,
-    T['body'] extends { default: infer D } ? D : T['body'] extends undefined ? any : T['body'],
+    T extends { body?: infer B } ? B : any,
     ReqQuery,
     Locals
   >,
-): RequestHandler<
-  Params,
-  ResBody,
-  T['body'] extends { default: infer D } ? D : T['body'] extends undefined ? any : T['body'],
-  ReqQuery,
-  Locals
-> {
+): RequestHandler<Params, ResBody, T extends { body?: infer B } ? B : any, ReqQuery, Locals> {
   createSwaggerRoute(routeDef);
-  return handler;
+  return handler as any;
+}
+
+/**
+ * Method decorator for class-based Express controllers.
+ */
+export function SwaggerRoute(routeDef: SwaggerRouteDefinition) {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    createSwaggerRoute(routeDef);
+    return descriptor;
+  };
 }

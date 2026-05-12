@@ -1,20 +1,24 @@
 import { Router } from 'express';
+import { withSwagger } from 'swagger-express-easy';
 
 import { authMiddleware } from '../middlewares/auth';
 
 import counterRoutes from './counter';
 import helloRoute from './hello';
 import messageBoardRoute from './messageBoard';
-import filesRoute from './fileUploads';
+import picFilesRoute from './picFilesRoute';
 import funFa from './funFacts';
-import apiV1Route from './api/index';
+import apiV1Route from './v1/index';
 import mathRoute from './math';
+import fileV1Route from './files-v1';
 
 import { MathController } from '../controllers/math.controller';
-import { withSwagger } from 'swagger-express-easy/swagger/decorators';
+import { fileUploadsRouter } from './filesUploads';
+import ordersRouter from './orders.routes';
 
 const router = Router();
 const mathController = new MathController();
+router.use([ordersRouter]);
 
 router.use(authMiddleware);
 
@@ -27,13 +31,15 @@ router.get(
   '/ping',
   withSwagger(
     { method: 'get', path: '/api/ping', description: { text: 'Check if API is alive' } },
-    (req, res) => res.json({ message: 'pong' }),
+    (_req, res) => res.json({ message: 'pong' }),
   ),
 );
 
 router.use('/counter', counterRoutes);
 router.use('/hello', helloRoute);
-router.use('/files', filesRoute);
+router.use('/files-pic', picFilesRoute);
+router.use('/files-uploads', fileUploadsRouter);
+router.use('/files-1v', fileV1Route);
 
 router.use('/message-board', messageBoardRoute);
 router.use('/fuc', funFa);

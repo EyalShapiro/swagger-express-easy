@@ -1,47 +1,38 @@
-// ============================================================
-//  swagger-express-easy — Public API
-// ============================================================
+import { Express } from 'express';
+import { SwaggerAuto, SwaggerSetupOptions } from './swagger';
+import { defineSchema, schemaRef } from './swagger/schemas';
+import { createSwaggerRoute } from './swagger/routeStore';
+import { withSwagger, SwaggerRoute } from './swagger/decorators';
 
-// --- Main Engine ---
-export { SwaggerAuto, setupSwagger, getSwaggerDocument, handleServerErrors } from './swagger/index';
-export type { SwaggerSetupOptions } from './swagger/index';
+/**
+ * Re-export core classes and types.
+ */
+export * from './swagger';
+export * from './swagger/swagger.config';
+export * from './swagger/schemas';
+export * from './swagger/routeStore';
+export * from './swagger/decorators';
 
-// --- Config ---
-export { buildSwaggerConfig, SWAGGER_CONFIG } from './swagger/swagger.config';
-export type {
-  SwaggerConfigOptions,
-  SwaggerInfoConfig,
-  SwaggerServerConfig,
-} from './swagger/swagger.config';
+/**
+ * High-level function to set up Swagger in an Express application.
+ *
+ * @param app - The Express application instance.
+ * @param options - Configuration options for Swagger.
+ */
+export async function setupSwagger(app: Express, options: SwaggerSetupOptions = {}) {
+  const swagger = new SwaggerAuto(app, options);
+  return swagger.setup();
+}
 
-// --- Route-store (annotate routes programmatically) ---
-export { SwaggerRouteStore, createSwaggerRoute, createSwaggerRoutes } from './swagger/routeStore';
-
-// --- Decorators & Wrappers ---
-export { SwaggerRoute, withSwagger } from './swagger/decorators';
-
-// --- Schema / Entity Manager ---
-export {
-  SchemaManager,
+/**
+ * Export a default object for convenience.
+ */
+export default {
+  SwaggerAuto,
+  setupSwagger,
   defineSchema,
   schemaRef,
-  getRegisteredSchemas,
-  clearSchemas,
-  defineResponseProperties,
-} from './swagger/schemas';
-export type { SchemaPropertyType, SchemaPropertyDef, OpenAPISchema } from './swagger/schemas';
-
-// --- Types ---
-export type { SwaggerRouteDefinition, HTTPMethod, ParametersType } from './swagger/routeStore/type';
-
-// --- Low-level utilities ---
-export {
-  readSwaggerFile,
-  updateSwaggerFile,
-  checkSwaggerFile,
-  normalizePath,
-  getSwaggerFilePath,
-} from './swagger/utils/functions';
-
-// --- Generation ---
-export { generateSwaggerDocs } from './swagger/swaggerAuto';
+  createSwaggerRoute,
+  withSwagger,
+  SwaggerRoute,
+};

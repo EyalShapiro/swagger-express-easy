@@ -4,7 +4,6 @@ import { SwaggerRouteStore } from '../routeStore';
 
 /**
  * Organizes Swagger document paths into tags based on the segments of the path.
- * Usually defaults to the first segment after /api/ or just the first segment.
  */
 export function organizeSwaggerTags(
   swaggerDocument: JsonObject,
@@ -20,12 +19,10 @@ export function organizeSwaggerTags(
   const existingTagNames = new Set(tagsArray.map((t) => t.name));
 
   for (const pathKey of Object.keys(swaggerDocument.paths)) {
-    // Try to find a tag name from the path (e.g., /api/users -> users)
     const segments = pathKey.split('/').filter(Boolean);
     let tagName = 'default';
 
     if (segments.length > 0) {
-      // If segments[0] matches the normalized base path, use segments[1] as tag
       if (normalizedBase && segments[0]?.toLowerCase() === normalizedBase && segments.length > 1) {
         tagName = segments[1];
       } else {
@@ -43,9 +40,10 @@ export function organizeSwaggerTags(
     for (const method of Object.keys(pathItem)) {
       const operation = pathItem[method];
       if (operation && typeof operation === 'object') {
-        operation.tags = operation?.tags || [];
-        if (!operation.tags.includes(tagName)) {
-          operation.tags.push(tagName);
+        const op = operation as any;
+        op.tags = op.tags || [];
+        if (!op.tags.includes(tagName)) {
+          op.tags.push(tagName);
         }
       }
     }
@@ -53,135 +51,167 @@ export function organizeSwaggerTags(
   return swaggerDocument;
 }
 
-export async function applyCustomRouteDescriptions(fullPath: string, basePath: string = '/') {
-  const normalizedBase = basePath.startsWith('/') ? basePath : `/${basePath}`;
+/**
+ * Deduplicates parameters by name and 'in' location.
+ */
+function mergeParameters(existing: any[] = [], incoming: any[] = []) {
+  const map = new Map<string, any>();
 
-  // Read the generated swagger file.
-  const swaggerDocument = await readSwaggerFile(fullPath);
+  // Add existing
+  for (const p of existing) {
+    const key = `${p.name}-${p.in}`;
+    map.set(key, p);
+  }
+
+  // Overwrite with incoming
+  for (const p of incoming) {
+    const key = `${p.name}-${p.in}`;
+    map.set(key, p);
+  }
+
+  return Array.from(map.values());
+}
+
+/**
+ * Applies custom route descriptions and filters paths for multi-instance isolation.
+ */
+export async function applyCustomRouteDescriptions(
+  fullPath: string,
+  basePath: string = '/',
+  doc?: JsonObject,
+) {
+  const normalizedBase = (basePath.startsWith('/') ? basePath : `/${basePath}`).toLowerCase();
+
+  // Use provided document or read from disk.
+  const swaggerDocument = doc || (await readSwaggerFile(fullPath));
   if (!swaggerDocument.paths) swaggerDocument.paths = {};
 
-  // Filter the actual document paths by basePath to ensure isolation between multiple apps
-  if (normalizedBase !== '/') {
-    const filteredPaths: Record<string, any> = {};
-    for (const [pathKey, pathValue] of Object.entries(swaggerDocument.paths || {})) {
-      const normalizedPath = pathKey.startsWith('/') ? pathKey : `/${pathKey}`;
-      if (normalizedPath.startsWith(normalizedBase)) {
-        filteredPaths[pathKey] = pathValue;
-      }
-    }
-    swaggerDocument.paths = filteredPaths;
+  // Ensure basic OpenAPI structure if missing
+  if (!swaggerDocument.openapi && !swaggerDocument.swagger) {
+    swaggerDocument.openapi = '3.0.3';
   }
 
   // Filter custom routes from the global store that match this instance's base path
   const allCustomRoutes = SwaggerRouteStore.getRouteList();
   const customRoutes = allCustomRoutes.filter((route) => {
-    const routePath = route.path.startsWith('/') ? route.path : `/${route.path}`;
+    const routePath = route.path.startsWith('/')
+      ? route.path.toLowerCase()
+      : `/${route.path.toLowerCase()}`;
     return normalizedBase === '/' || routePath.startsWith(normalizedBase);
   });
 
-  // Create a lookup map of normalized paths from the auto-generated document.
+  // Filter the actual document paths by basePath
+  if (normalizedBase !== '/') {
+    const filteredPaths: Record<string, any> = {};
+    const customRoutePaths = new Set(customRoutes.map((r) => normalizePath(r.path).toLowerCase()));
+
+    for (const [pathKey, pathValue] of Object.entries(swaggerDocument.paths || {})) {
+      const normPath = normalizePath(pathKey).toLowerCase();
+
+      // Keep path if it starts with basePath OR if it's explicitly defined in our custom routes
+      if (normPath.startsWith(normalizedBase) || customRoutePaths.has(normPath)) {
+        filteredPaths[pathKey] = pathValue;
+      }
+    }
+
+    const originalCount = Object.keys(swaggerDocument.paths).length;
+    swaggerDocument.paths = filteredPaths;
+    const filteredCount = Object.keys(filteredPaths).length;
+
+    if (originalCount > 0 && filteredCount === 0) {
+      console.warn(
+        `\x1b[33m[swagger-express-easy] Warning: All ${originalCount} routes were filtered out by basePath "${basePath}".\x1b[0m`,
+      );
+    }
+  }
+
+  // Create a lookup map of normalized paths from the filtered document.
   const autoGeneratedPaths: { [normalizedPath: string]: string } = {};
-  for (const p of Object.keys(swaggerDocument.paths)) autoGeneratedPaths[normalizePath(p)] = p;
+  for (const p of Object.keys(swaggerDocument.paths)) {
+    autoGeneratedPaths[normalizePath(p).toLowerCase()] = p;
+  }
 
-  //  Merge custom route data (body, description, parameters) into existing paths.
+  // Merge custom route data
   for (const route of customRoutes) {
-    const normalizedCustomPath = normalizePath(route.path);
+    const normalizedCustomPath = normalizePath(route.path).toLowerCase();
 
-    // Improved matching: try direct match, then try with/without trailing slash, then try suffixes (for basePaths)
-    let originalPath = autoGeneratedPaths[normalizedCustomPath];
+    // Use any to bypass persistent TS2322 compilation error
+    let originalPath: any = autoGeneratedPaths[normalizedCustomPath];
     if (!originalPath) {
-      const possibleMatch = Object.keys(autoGeneratedPaths).find((p) => {
-        // 1. Direct or slash variants
-        if (
-          p === normalizedCustomPath ||
-          p === normalizedCustomPath + '/' ||
-          normalizedCustomPath === p + '/'
-        ) {
-          return true;
-        }
+      // Try fuzzy matching (e.g. param syntax :id -> {id})
+      const openApiStyle = normalizedCustomPath.replace(/:([a-zA-Z0-9_]+)/g, '{$1}');
+      originalPath =
+        autoGeneratedPaths[openApiStyle] ||
+        Object.keys(autoGeneratedPaths).find(
+          (p) => p.endsWith(openApiStyle) || openApiStyle.endsWith(p),
+        );
+    }
 
-        // 2. Suffix match (handles prefixes like /api/v1/math/calculate matching just /calculate)
-        if (
-          p.endsWith(normalizedCustomPath) &&
-          p.charAt(p.length - normalizedCustomPath.length - 1) === '/'
-        ) {
-          return true;
-        }
-
-        // 3. Param syntax conversion (:id -> {id}) and then match
-        const openApiStyle = normalizedCustomPath.replace(/:([a-zA-Z0-9_]+)/g, '{$1}');
-        if (p === openApiStyle || p.endsWith(openApiStyle)) return true;
-        return false;
-      });
-      if (possibleMatch) originalPath = autoGeneratedPaths[possibleMatch];
+    // If path still doesn't exist, we CREATE it
+    if (!originalPath) {
+      originalPath = route.path.startsWith('/') ? route.path : `/${route.path}`;
+      if (!swaggerDocument.paths[originalPath]) {
+        swaggerDocument.paths[originalPath] = {};
+      }
     }
 
     if (originalPath) {
-      // The path exists, so we can safely merge our custom data.
       const { method, description, body, parameters, responses } = route;
       const pathItem = swaggerDocument.paths[originalPath];
 
-      if (pathItem[method]) {
-        let requestBody = undefined;
-        if (body && typeof body === 'object') {
-          let schema: Record<string, unknown> = {};
-
-          if ('$ref' in body) {
-            // Handle Schema Reference
-            schema = { $ref: body.$ref };
-          } else {
-            // Handle Inline Object
-            const properties: Record<string, Record<string, unknown>> = {};
-            for (const key in body) {
-              if (key === 'default') continue;
-              const val = (body as Record<string, unknown>)[key];
-              const type = typeof val;
-              properties[key] = {
-                type: type === 'object' ? 'object' : type,
-                example: val,
-              };
-            }
-            const requiredNotDefault = Object.keys(body).filter((k) => k !== 'default');
-            schema = { type: 'object', required: requiredNotDefault, properties };
-          }
-
-          requestBody = {
-            content: {
-              'application/json': {
-                schema,
-              },
-            },
-          };
-        }
-        // Merge description and requestBody
-        pathItem[method].description = description?.text || pathItem[method]?.description || '';
-        if (requestBody) pathItem[method].requestBody = requestBody;
-
-        // Apply consumes/produces/tags if provided
-        if (route.consumes) pathItem[method].consumes = route.consumes;
-        if (route.produces) pathItem[method].produces = route.produces;
-
-        const combinedTags = [...(pathItem[method]?.tags || [])];
-        if (route.tag) combinedTags.push(route.tag);
-        if (route.tags) combinedTags.push(...route.tags);
-
-        if (combinedTags.length > 0) {
-          pathItem[method].tags = Array.from(new Set(combinedTags));
-        }
-
-        // Merge parameters
-        if (parameters && Array.isArray(parameters)) {
-          if (!pathItem[method]?.parameters) {
-            pathItem[method].parameters = [];
-          }
-          pathItem[method].parameters = [...pathItem[method].parameters, ...parameters];
-        }
-
-        // Merge responses
-        if (responses && typeof responses === 'object') {
-          pathItem[method].responses = { ...(pathItem[method]?.responses || {}), ...responses };
-        }
+      // Ensure the method object exists
+      if (!pathItem[method]) {
+        pathItem[method] = {
+          responses: responses || { 200: { description: 'OK' } },
+        };
       }
+
+      const op = pathItem[method];
+      let requestBody = undefined;
+      if (body && typeof body === 'object') {
+        let schema: Record<string, unknown> = {};
+        if ('$ref' in body) {
+          schema = { $ref: body.$ref };
+        } else if ('type' in body && body.type === 'object') {
+          schema = body; // Direct schema
+        } else {
+          const properties: Record<string, Record<string, unknown>> = {};
+          for (const key in body) {
+            if (key === 'default') continue;
+            const val = (body as Record<string, unknown>)[key];
+            const type = typeof val;
+            properties[key] = { type: type === 'object' ? 'object' : type, example: val };
+          }
+          const requiredNotDefault = Object.keys(body).filter((k) => k !== 'default');
+          schema = { type: 'object', required: requiredNotDefault, properties };
+        }
+        requestBody = { content: { 'application/json': { schema } } };
+      }
+
+      op.description = (description?.text || op.description || '') as string;
+      if (description?.summary) op.summary = description.summary;
+      if (requestBody) op.requestBody = requestBody;
+
+      if (route.consumes) op.consumes = route.consumes;
+      if (route.produces) op.produces = route.produces;
+
+      const combinedTags = [...(op.tags || [])];
+      if (route.tag) combinedTags.push(route.tag);
+      if (route.tags) combinedTags.push(...route.tags);
+      if (combinedTags.length > 0) {
+        op.tags = Array.from(new Set(combinedTags));
+      }
+
+      // Fix for duplicated parameters: deduplicate by name and in location
+      if (parameters && Array.isArray(parameters)) {
+        op.parameters = mergeParameters(op.parameters, parameters);
+      }
+
+      if (responses && typeof responses === 'object') {
+        op.responses = { ...(op.responses || {}), ...responses };
+      }
+
+      if (route.security) op.security = route.security;
     }
   }
 

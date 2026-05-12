@@ -1,49 +1,71 @@
 import path from 'path';
 import fs from 'fs';
-import { JsonObject } from 'swagger-ui-express';
-import swaggerAutogen from 'swagger-autogen';
+import swaggerAutogenFactory from 'swagger-autogen';
+import { JsonObject, SwaggerOptions } from 'swagger-ui-express';
+
 import { SWAGGER_CONFIG, SwaggerConfigOptions } from './swagger.config';
 import { updateSwaggerFile } from './utils/functions';
 import { applyCustomRouteDescriptions, organizeSwaggerTags } from './utils/sortedData';
 import { getRegisteredSchemas } from './schemas';
+
+// Load swagger-autogen factory
+
 const FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+function loadingBar(i: number, basePath: string) {
+  process.stdout.write(`\r\x1b[36m${FRAMES[i]} Scanning routes for "${basePath}"...\x1b[0m`);
+}
 
 /**
  * Generates Swagger documentation by merging auto-generated and custom route data.
- * @returns The generated Swagger document object (JsonObject).
  */
 export async function generateSwaggerDocs(
-  swaggerConfig: SwaggerConfigOptions & { document: any } = SWAGGER_CONFIG,
+  swaggerConfig: SwaggerConfigOptions & { document: SwaggerOptions } = SWAGGER_CONFIG,
 ): Promise<JsonObject> {
   let interval: NodeJS.Timeout | null = null;
   try {
-    const fullPath = path.resolve(process.cwd(), swaggerConfig?.outputFile ?? '');
+    const fullPath = path.resolve(
+      process.cwd(),
+      swaggerConfig?.outputFile ?? 'swagger-output.json',
+    );
+    const basePath = swaggerConfig.basePath || '/';
 
-    // Start loading spinner
-    let i = 0;
-    interval = setInterval(() => {
-      process.stdout.write(
-        `\r\x1b[36m${FRAMES[i]} Generating Swagger docs for ${swaggerConfig.basePath || 'API'}...\x1b[0m`,
-      );
-      i = (i + 1) % FRAMES.length;
-    }, 80);
-
-    // Ensure the output directory exists before generation
     const dir = path.dirname(fullPath);
     if (!fs.existsSync(dir)) {
       await fs.promises.mkdir(dir, { recursive: true });
     }
 
-    // Generate the base swagger documentation file from API endpoints.
-    await swaggerAutogen({ openapi: '3.0.3', autoHeaders: true, autoBody: true })(
-      fullPath,
-      swaggerConfig.endpointsRoutes,
-      swaggerConfig.document,
+    // Start loading spinner
+    let i = 0;
+    interval = setInterval(() => {
+      loadingBar(i, basePath);
+      i = (i + 1) % FRAMES.length;
+    }, 80);
+
+    const autogenOptions = {
+      openapi: swaggerConfig.openapi || '3.0.3',
+      autoHeaders: true,
+      autoBody: true,
+      autoQuery: true,
+      autoResponse: true,
+    };
+    const generator = swaggerAutogenFactory(autogenOptions);
+
+    const endpoints = (swaggerConfig.endpointsRoutes || ['./src/app.ts']).map((f) =>
+      path.resolve(process.cwd(), f),
     );
 
-    const swaggerDocument = await applyCustomRouteDescriptions(fullPath, swaggerConfig.basePath);
+    // Call the generator
+    const result = await generator(fullPath, endpoints, swaggerConfig.document);
 
-    // Inject registered schemas into components.schemas
+    if (!result || !result.success) {
+      process.stdout.write(
+        '\n\x1b[33m[swagger-express-easy] Note: Some dynamic routes might require manual definitions.\x1b[0m\n',
+      );
+    }
+
+    const swaggerDocument = await applyCustomRouteDescriptions(fullPath, basePath);
+
+    // Inject registered schemas
     const schemas = getRegisteredSchemas();
     if (Object.keys(schemas).length > 0) {
       if (!swaggerDocument.components) swaggerDocument.components = {};
@@ -53,22 +75,21 @@ export async function generateSwaggerDocs(
       };
     }
 
-    // Organize tags for all paths.
-    const organizedSwaggerDoc = organizeSwaggerTags(swaggerDocument, swaggerConfig.basePath);
+    // Organize tags
+    const organizedSwaggerDoc = organizeSwaggerTags(swaggerDocument, basePath);
 
-    // Write the final, updated swagger document once.
+    // Final update
     await updateSwaggerFile(organizedSwaggerDoc, fullPath);
 
-    // Stop spinner and show success
     if (interval) clearInterval(interval);
-    process.stdout.write('\r\x1b[K'); // Clear the line
-    console.info(`\x1b[32m✔ Swagger docs generated successfully at "${fullPath}"\x1b[0m`);
+    process.stdout.write('\r\x1b[K');
+    console.info(`\x1b[32m✔ Swagger documentation updated: ${fullPath}\x1b[0m`);
 
     return organizedSwaggerDoc;
   } catch (error) {
     if (interval) clearInterval(interval);
     process.stdout.write('\r\x1b[K');
-    console.error('\n\x1b[31m✖ Error generating Swagger docs:\x1b[0m', error);
+    console.error('\n\x1b[31m✖ Failed to generate Swagger docs:\x1b[0m', error);
     throw error;
   }
 }

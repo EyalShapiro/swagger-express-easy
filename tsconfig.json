@@ -24,7 +24,7 @@
       "swagger-express-easy/*": ["lib/*"]
     }
   },
-  "include": ["src/**/*.ts", "lib/**/*.ts"],
+  "include": ["src/**/*.ts", "lib/**/*.ts", "tests/**/*.ts"],
   "ts-node": {
     "compilerOptions": {
       "module": "commonjs"

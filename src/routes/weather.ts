@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getWeatherByCity, updateWeatherReport } from '../controllers/weatherController';
-import { createSwaggerRoutes } from '../../lib/swagger/routeStore/index';
+import { createSwaggerRoutes } from 'swagger-express-easy';
 
 const router = Router();
 

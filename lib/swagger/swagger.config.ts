@@ -3,152 +3,137 @@ import fs from 'fs';
 import { SwaggerOptions } from 'swagger-ui-express';
 import _pkg from './utils/_packageJsonData';
 
-/**
- * Configuration for the OpenAPI 'info' block.
- * This information is displayed at the very top of the Swagger UI.
- */
+// ---------------------------------------------------------------------------
+//  Interfaces
+// ---------------------------------------------------------------------------
+
 export interface SwaggerInfoConfig {
-  /** The title of the API. Defaults to package.json name. */
   title?: string;
-  /** A brief description of the API. Defaults to package.json description. */
   description?: string;
-  /** The version of the API. Defaults to package.json version. */
   version?: string;
-  /** Contact information for the API developers. */
   contact?: { name?: string; url?: string; email?: string };
-  /** License information for the API. */
   license?: { name?: string; url?: string };
 }
 
-/**
- * Configuration for an OpenAPI server entry.
- */
 export interface SwaggerServerConfig {
-  /** The full URL of the server (e.g., 'http://localhost:3000'). */
   url: string;
-  /** A short description of the environment (e.g., 'Local Dev'). */
   description?: string;
 }
 
 /**
- * Global configuration options for the swagger-express-easy library.
+ * All configuration options for swagger-express-easy.
  */
 export interface SwaggerConfigOptions {
-  /** The port number the server is running on. */
-  port?: number | string;
-  /** The host name the server is running on (e.g., 'localhost', 'api.example.com'). */
-  host?: string;
-  /** The filename for the generated Swagger JSON file. @default 'swagger-output.json' */
+  /** Output file name (default: 'swagger-output.json') */
   outputFile?: string;
-  /** The directory where the Swagger JSON file should be saved. @default process.cwd() */
+  /** Directory for the output file (default: cwd) */
   outputDir?: string;
-  /** Glob patterns of files to scan for Express routes. */
+  /** Files / entry-points to scan for routes */
   endpointsRoutes?: string[];
-  /** Metadata for the OpenAPI 'info' object. */
-  info?: SwaggerInfoConfig;
-  /** A list of server environments (Dev, Staging, Prod). */
-  servers?: SwaggerServerConfig[];
-  /** The base path for all API routes. @default '/' */
+  /** Base path for multi-instance isolation */
   basePath?: string;
-  /** The OpenAPI specification version to use. @default '3.0.3' */
+  /** OpenAPI version string (default: '3.0.3') */
   openapi?: string;
-  /** Whether to automatically include JWT Bearer Auth in the specification. @default true */
+  /** API info block */
+  info?: SwaggerInfoConfig;
+  /** Servers list */
+  servers?: SwaggerServerConfig[];
+  /**
+   * Add Bearer JWT auth to the document.
+   * @default false
+   */
   bearerAuth?: boolean;
-  /** Security definitions (Swagger 2.0) or Security Schemes (OpenAPI 3.0) */
-  securityDefinitions?: Record<string, any>;
-  /** Global security requirements applied to all routes */
+  /** Extra security-scheme definitions */
+  securityDefinitions?: SwaggerOptions;
+  /** Global security requirements */
   security?: Array<Record<string, string[]>>;
-  /** Global model definitions */
-  definitions?: Record<string, any>;
-  /** Global tags with descriptions */
-  tags?: Array<{ name: string; description?: string }>;
-  /** Global media types the API consumes */
-  consumes?: string[];
-  /** Global media types the API produces */
-  produces?: string[];
-  /** Raw access to the underlying Swagger configuration object. */
+  /** Raw extra fields merged into the document root */
   raw?: SwaggerOptions;
+  /** Explicitly define tags */
+  tags?: Array<{ name: string; description?: string }>;
+  /** Define the order of tags in the UI */
+  tagsOrder?: string[];
+  consumes?: string[];
+  produces?: string[];
+  definitions?: SwaggerOptions;
+}
+
+// ---------------------------------------------------------------------------
+//  Builder
+// ---------------------------------------------------------------------------
+
+/** Fully resolved config returned by buildSwaggerConfig */
+export interface ResolvedSwaggerConfig extends SwaggerConfigOptions {
+  outputFile: string;
+  endpointsRoutes: string[];
+  basePath: string;
+  document: Record<string, any>;
 }
 
 /**
- * Merges user-supplied options with sensible defaults derived from
- * environment variables and the project's package.json.
- *
- * @param {SwaggerConfigOptions} [options={}] - User configuration options.
- * @returns The fully resolved configuration object.
+ * Merges user-supplied options with sensible defaults.
  */
-export function buildSwaggerConfig(options: SwaggerConfigOptions = {}) {
-  const host = options.host || (options.port ? `localhost:${options.port}` : 'localhost');
-
-  const info: SwaggerOptions['info'] = {
-    title: options.info?.title ?? `${_pkg?.name ?? 'My API'} — API Documentation`,
-    description:
-      options.info?.description ?? _pkg?.description ?? 'Auto-generated Swagger documentation',
+export function buildSwaggerConfig(options: SwaggerConfigOptions = {}): ResolvedSwaggerConfig {
+  const info = {
+    title: options.info?.title ?? `${_pkg?.name ?? 'My API'} — API Docs`,
+    description: options.info?.description ?? _pkg?.description ?? 'Auto-generated Swagger docs',
     version: options.info?.version ?? _pkg?.version ?? '1.0.0',
     ...(options.info?.contact ? { contact: options.info.contact } : {}),
     ...(options.info?.license ? { license: options.info.license } : {}),
   };
 
-  const servers: SwaggerServerConfig[] = options.servers ?? [
-    { description: 'Local development', url: `http://${host}` },
-  ];
+  const servers: SwaggerServerConfig[] = options.servers ?? [];
 
-  const components: SwaggerOptions['components'] = {
-    securitySchemes: {
-      ...(options.bearerAuth !== false
-        ? {
-            bearerAuth: {
-              type: 'http',
-              scheme: 'bearer',
-              bearerFormat: 'JWT',
-              description: 'Enter JWT token',
-            },
-          }
-        : {}),
-      ...(options.securityDefinitions || {}),
-    },
+  // Security schemes
+  const securitySchemes: Record<string, any> = {
+    ...(options.securityDefinitions ?? {}),
   };
+  if (options.bearerAuth) {
+    securitySchemes.bearerAuth = {
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      description: 'Enter your JWT token',
+    };
+  }
 
-  const document: SwaggerOptions = {
-    openapi: options?.openapi ?? '3.0.3',
+  const globalSecurity: Array<Record<string, string[]>> =
+    options.security ?? (options.bearerAuth ? [{ bearerAuth: [] }] : []);
+
+  const document: Record<string, any> = {
+    openapi: options.openapi ?? '3.0.3',
     info,
     servers,
-    components,
-    security: options?.security ?? (options.bearerAuth !== false ? [{ bearerAuth: [] }] : []),
-    definitions: options?.definitions,
-    tags: options?.tags,
-    consumes: options?.consumes,
-    produces: options?.produces,
-    schemes: ['http', 'https'],
-    host: host,
-    basePath: options?.basePath ?? '/',
-    ...options.raw,
+    components: {
+      schemas: {},
+      securitySchemes,
+    },
+    security: globalSecurity,
+    ...(options.tags ? { tags: options.tags } : {}),
+    ...(options.consumes ? { consumes: options.consumes } : {}),
+    ...(options.produces ? { produces: options.produces } : {}),
+    ...(options.definitions ? { definitions: options.definitions } : {}),
+    ...(options.raw ?? {}),
   };
 
-  const finalOutputFile = path.join(
-    options?.outputDir ?? process.cwd() ?? __dirname ?? '',
-    options?.outputFile ?? 'swagger-output.json',
+  const finalOutputFile = path.resolve(
+    options.outputDir ?? process.cwd(),
+    options.outputFile ?? 'swagger-output.json',
   );
 
-  // Default entry points to scan if none provided
   const defaultEntries = ['./src/app.ts', './src/index.ts', './src/server.ts', './src/main.ts'];
-  const existingEntries = defaultEntries.filter((f) =>
+  const routesToScan = (options.endpointsRoutes ?? defaultEntries).filter((f) =>
     fs.existsSync(path.resolve(process.cwd(), f)),
   );
 
   return {
-    port: options.port,
-    host,
+    ...options,
     outputFile: finalOutputFile,
-    endpointsRoutes: (
-      options?.endpointsRoutes ?? (existingEntries.length > 0 ? existingEntries : ['./src/app.ts'])
-    ).filter((f) => fs.existsSync(path.resolve(process.cwd(), f))),
+    endpointsRoutes: routesToScan.length > 0 ? routesToScan : ['./src/app.ts'],
+    basePath: options.basePath ?? '/',
     document,
   };
 }
 
-/**
- * Default configuration instance built with zero options.
- * Uses smart defaults from env and package.json.
- */
+/** Default config (used by the start script) */
 export const SWAGGER_CONFIG = buildSwaggerConfig();

@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-dotenv.config({ path: ['.env.dev', '.env'], debug: true });
+dotenv.config({ path: ['.env.local'], debug: true });
 
 import express from 'express';
 import morgan from 'morgan';
@@ -12,6 +12,7 @@ import { HOST, PORT } from './config';
 import { addTimeStamp } from './middlewares/timeStamp';
 import { corsOptions } from './middlewares/cors';
 import outersRouter from './outers';
+import weatherRouter from './routes/weather';
 
 const app = express();
 const app2 = express();
@@ -25,32 +26,35 @@ app.use(addTimeStamp);
 app.use('/assets', express.static('assets'));
 
 app.get('/', (_req, res) => res.send('Hello World!'));
+
 app.get('/ping', (_req, res) => {
   const style = `display: flex; width: 100%;  height: 100%;
     flex-wrap: nowrap; align-items: center; justify-content: center; color: blue;`;
-  res.status(200).send(`<div style='${style}'><h1>pong</h1></div>`);
+  res.status(200).send(`<div style='${style}'><h1>pong</h1></div>`).sendStatus(200);
 });
-app.get('/status', (req, res) => {
+
+app.get('/status', (_req, res) => {
   res.jsonp({ status: 'Running', timestamp: new Date().toISOString(), uptime: process.uptime() });
 });
+
 app2.get('/', (_req, res) => res.send('Hello World from app2!'));
 app2.use('/myApi', outersRouter);
 
 app.use('/api', router);
 app.use(outersRouter);
 app.use('/api2', router);
+app.use('/weather', weatherRouter);
 
 // Initialize Swagger instances
 const swagger = new SwaggerAuto(app, {
   path: '/api-docs',
   watch: true,
-  endpointsRoutes: ['./src/app.ts'],
+  endpointsRoutes: ['./src/app.ts', './src/routes/index.ts', './src/outers/index.ts'],
   outputFile: './swagger.json',
   outputDir: './dist',
+  tagsOrder: ['calculate', 'circle-area', 'fun'],
   swaggerUiOptions: {
-    customSiteTitle: 'My Awesome API Docs',
-    customCss: '.swagger-ui .topbar { display: none }',
-    customfavIcon: '/assets/favicon.png',
+    customSiteTitle: 'Eyal API Docs',
   },
 });
 
@@ -58,9 +62,16 @@ const swagger2 = new SwaggerAuto(app2, {
   path: '/api-docs2',
   watch: false,
   basePath: 'myApi',
-  endpointsRoutes: ['./src/app.ts'],
+  endpointsRoutes: ['./src/app.ts', './src/routes/index.ts', './src/outers/index.ts'],
   outputFile: './swagger-examples.json',
   outputDir: './dist',
+  bearerAuth: true,
+
+  swaggerUiOptions: {
+    customSiteTitle: 'My Awesome API Docs',
+    customCss: '.swagger-ui .topbar { display: none }',
+    customfavIcon: '/assets/favicon.png',
+  },
 });
 
 // Startup function to handle async setup in correct order
@@ -97,4 +108,6 @@ async function startServer() {
 }
 
 // Run the startup
-startServer();
+if (process.env.SWAGGER_SKIP_LISTEN !== 'true') {
+  startServer();
+}

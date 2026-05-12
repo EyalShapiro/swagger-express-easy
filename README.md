@@ -15,6 +15,7 @@ Stop writing manual JSON/YAML — just write your code, and let us handle the re
 - **Type-Safe Schemas**: Define reusable Entities with a simple API.
 - **Programmatic Metadata**: Annotate routes directly in your route files.
 - **File Upload Support**: Easy documentation for `multipart/form-data`.
+- **Multi-Instance Support**: Run multiple Swagger servers with isolated routes in a single process.
 - **Zero Configuration**: Smart defaults from your `package.json`.
 
 ---
@@ -54,12 +55,38 @@ start();
 
 ## 🛠️ Advanced Usage
 
+### Multiple Instances & Isolation
+
+If you have multiple Express apps or micro-frontends in a single process, you can isolate their documentation using `basePath`.
+
+```typescript
+const app1 = express();
+const app2 = express();
+
+// This instance will ONLY show routes starting with /api
+const swagger1 = new SwaggerAuto(app1, {
+  path: '/docs-app1',
+  basePath: 'api', // Isolation filter
+  outputFile: 'swagger-app1.json'
+});
+
+// This instance will ONLY show routes starting with /myApi
+const swagger2 = new SwaggerAuto(app2, {
+  path: '/docs-app2',
+  basePath: 'myApi', // Isolation filter
+  outputFile: 'swagger-app2.json'
+});
+
+await swagger1.setup();
+await swagger2.setup();
+```
+
 ### Reusable Schemas (Entities)
 
 Define your models once and reuse them everywhere.
 
 ```typescript
-import { defineSchema, schemaRef } from 'swagger-express-easy';
+import { defineSchema, schemaRef, createSwaggerRoute } from 'swagger-express-easy';
 
 // Define the schema
 defineSchema('User', {
@@ -72,7 +99,12 @@ defineSchema('User', {
 createSwaggerRoute({
   method: 'get',
   path: '/api/users/{id}',
-  body: { $ref: schemaRef('User') }
+  responses: {
+    200: {
+      description: 'User found',
+      content: { 'application/json': { schema: { $ref: schemaRef('User') } } }
+    }
+  }
 });
 ```
 
@@ -99,8 +131,6 @@ createSwaggerRoute({
 ```
 
 ### Decorators & Wrappers
-
-If you prefer keeping your documentation right next to your logic, you can use our built-in wrappers and decorators!
 
 #### 1. Wrapper (For Standard Functions)
 ```typescript
@@ -129,13 +159,13 @@ class UserController {
 
 ---
 
-
 ## ⚙️ Configuration Options
 
 | Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `path` | `string` | `'/api-docs'` | The URL path for Swagger UI. |
 | `watch` | `boolean` | `false` | Regenerate docs on every request to `path`. |
+| `basePath` | `string` | `'/'` | Filter routes to only show those starting with this path. |
 | `outputFile` | `string` | `'swagger-output.json'` | Filename for the generated JSON. |
 | `outputDir` | `string` | `process.cwd()` | Directory for the output file. |
 | `endpointsRoutes`| `string[]` | `['./src/app.ts', ...]` | Glob patterns to scan for routes. |

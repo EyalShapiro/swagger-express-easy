@@ -4,7 +4,7 @@ import * as functions from '../../lib/swagger/utils/functions';
 
 jest.mock('../../lib/swagger/utils/functions', () => ({
   readSwaggerFile: jest.fn(),
-  normalizePath: jest.fn((p) => p)
+  normalizePath: jest.fn((p) => p),
 }));
 
 describe('sortedData - Responses and Tags', () => {
@@ -20,11 +20,11 @@ describe('sortedData - Responses and Tags', () => {
         '/api/test': {
           get: {
             responses: {
-              200: { description: 'Default OK' }
-            }
-          }
-        }
-      }
+              200: { description: 'Default OK' },
+            },
+          },
+        },
+      },
     });
 
     SwaggerRouteStore.addRoute({
@@ -32,8 +32,8 @@ describe('sortedData - Responses and Tags', () => {
       path: '/api/test',
       responses: {
         404: { description: 'Not Found Custom' },
-        200: { description: 'Overridden OK' }
-      }
+        200: { description: 'Overridden OK' },
+      },
     });
 
     const result = await applyCustomRouteDescriptions('fake-path');
@@ -47,14 +47,14 @@ describe('sortedData - Responses and Tags', () => {
     (functions.readSwaggerFile as jest.Mock).mockResolvedValue({
       paths: {
         '/api/empty': {
-          get: { responses: { 200: { description: 'OK' } } }
-        }
-      }
+          get: { responses: { 200: { description: 'OK' } } },
+        },
+      },
     });
 
     SwaggerRouteStore.addRoute({
       method: 'get',
-      path: '/api/empty'
+      path: '/api/empty',
       // no responses specified
     });
 

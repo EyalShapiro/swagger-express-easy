@@ -1,59 +1,79 @@
-import { SwaggerRouteDefinition } from './type';
-
 /**
- * Efficient in-memory store for Swagger route metadata.
- * Collects programmatic route definitions and merges them into the final documentation.
+ * Definition of a single Swagger route.
  */
-export const SwaggerRouteStore = (() => {
-  const routeMap = new Map<string, SwaggerRouteDefinition>();
-
-  return {
-    /**
-     * Adds a new Swagger route definition to the global store.
-     * Overwrites existing definitions for the same method and path.
-     *
-     * @param {SwaggerRouteDefinition} route - The route metadata.
-     */
-    addRoute: (route: SwaggerRouteDefinition) => {
-      const key = `${route.method.toLowerCase()}:${route.path}`;
-      routeMap.set(key, route);
-    },
-
-    /**
-     * Returns the raw internal Map of routes.
-     * @returns {Map<string, SwaggerRouteDefinition>} The internal store.
-     */
-    getData: () => routeMap,
-
-    /**
-     * Returns all registered Swagger routes as an array.
-     * @returns {SwaggerRouteDefinition[]} The list of all route definitions.
-     */
-    getRouteList: (): SwaggerRouteDefinition[] => Array.from(routeMap.values()),
+export interface SwaggerRouteDefinition {
+  /** HTTP method (get, post, put, delete, patch, etc.) */
+  method: string;
+  /** Full path including parameters (e.g. /api/users/{id}) */
+  path: string;
+  /** Metadata for the route (description, summary) */
+  description?: {
+    text?: string;
+    summary?: string;
   };
-})();
+  /** Request body schema or example */
+  body?: any;
+  /** List of parameters (query, path, header) */
+  parameters?: any[];
+  /** Expected responses and their schemas */
+  responses?: Record<string, any>;
+  /** Optional tag for grouping in UI */
+  tag?: string;
+  /** Multiple tags for grouping */
+  tags?: string[];
+  /** Media types the route consumes */
+  consumes?: string[];
+  /** Media types the route produces */
+  produces?: string[];
+  /** Security requirements for this route */
+  security?: Array<Record<string, string[]>>;
+}
 
 /**
- * Registers a single route for Swagger documentation.
- * This is the primary way to add metadata (descriptions, bodies, refs) to your routes programmatically.
- *
- * @param {SwaggerRouteDefinition} route - The route definition object.
- *
- * @example
- * createSwaggerRoute({
- *   method: 'get',
- *   path: '/api/users',
- *   description: { text: 'Get all users' },
- *   tags: ['Users']
- * });
+ * Singleton store for manual route definitions.
  */
-export const createSwaggerRoute = SwaggerRouteStore.addRoute;
+export class SwaggerRouteStore {
+  private static instance: SwaggerRouteStore;
+  private routes: SwaggerRouteDefinition[] = [];
+
+  private constructor() {}
+
+  public static getData(): SwaggerRouteStore {
+    if (!SwaggerRouteStore.instance) {
+      SwaggerRouteStore.instance = new SwaggerRouteStore();
+    }
+    return SwaggerRouteStore.instance;
+  }
+
+  public static addRoute(route: SwaggerRouteDefinition | SwaggerRouteDefinition[]): void {
+    const store = SwaggerRouteStore.getData();
+    if (Array.isArray(route)) {
+      store.routes.push(...route);
+    } else {
+      store.routes.push(route);
+    }
+  }
+
+  public static getRouteList(): SwaggerRouteDefinition[] {
+    return SwaggerRouteStore.getData().routes;
+  }
+
+  public clear(): void {
+    this.routes = [];
+  }
+}
 
 /**
- * Registers multiple routes for Swagger documentation at once.
- *
- * @param {SwaggerRouteDefinition[]} routeList - An array of route definitions.
+ * Helper to register one or more routes manually.
+ * Supports both a single route object or an array of route objects.
  */
-export const createSwaggerRoutes = (routeList: SwaggerRouteDefinition[]) => {
-  routeList.map(SwaggerRouteStore.addRoute);
-};
+export function createSwaggerRoute(
+  routeDef: SwaggerRouteDefinition | SwaggerRouteDefinition[],
+): void {
+  SwaggerRouteStore.addRoute(routeDef);
+}
+
+/**
+ * Alias for createSwaggerRoute. Supports single or multiple routes.
+ */
+export const createSwaggerRoutes = createSwaggerRoute;

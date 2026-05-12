@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { SwaggerRoute } from 'swagger-express-easy/swagger/decorators';
+import { SwaggerRoute } from 'swagger-express-easy';
 
 /**
  * Example of a Class-based Controller using decorators.

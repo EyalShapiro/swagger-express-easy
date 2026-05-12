@@ -5,6 +5,7 @@ import fsPromises from 'fs/promises';
 import { JsonObject } from 'swagger-ui-express';
 
 import { SWAGGER_CONFIG } from '../swagger.config';
+export const getAddrFormatToLocal = (address: string) => (address === '::' ? 'localhost' : address);
 
 /**
  * Lightweight JSON parser — inline so the library has no external deps.
