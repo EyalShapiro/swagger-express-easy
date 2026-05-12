@@ -8,9 +8,6 @@ console.log('SWAGGER_WORK:', SWAGGER_WORK);
 
 (async () => {
   try {
-    // Prevent server from listening when just generating docs
-    process.env.SWAGGER_SKIP_LISTEN = 'true';
-
     // Attempt to load the entry point files to register manual routes (createSwaggerRoutes)
     const endpoints = SWAGGER_CONFIG.endpointsRoutes || [];
     for (const file of endpoints) {

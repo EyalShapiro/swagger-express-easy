@@ -14,6 +14,7 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: {
         project: './tsconfig.json',
+        projectFolderIgnoreList: ['**/node_modules/**'],
       },
     },
   },

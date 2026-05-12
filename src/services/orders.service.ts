@@ -1,20 +1,20 @@
+import { delay, fakeDBRequest, randomDelay, randomFail } from '@/utils/delay';
 import { ordersDB } from '../db/orders.db';
 import type { Order } from '../types/order.types';
 
-export const getAllOrders = (): Order[] => {
-  return Array.from(ordersDB.values());
+export const getAllOrders = async (): Promise<Order[]> => {
+  return fakeDBRequest(Array.from(ordersDB.values()));
 };
-
-export const getOrderById = (id: number): Order | undefined => {
-  return ordersDB.get(id);
+export const getOrderById = async (id: number): Promise<Order | undefined> => {
+  return fakeDBRequest(ordersDB.get(id));
 };
-
-export const createOrder = (order: Order): Order => {
+export async function createOrder(order: Order): Promise<Order> {
+  await delay(1000);
   ordersDB.set(order.id, order);
   return order;
-};
+}
 
-export const updateOrder = (id: number, order: Order): Order | null => {
+export async function updateOrder(id: number, order: Order): Promise<Order | null> {
   if (!ordersDB.has(id)) {
     return null;
   }
@@ -23,25 +23,36 @@ export const updateOrder = (id: number, order: Order): Order | null => {
     ...order,
     id,
   };
-
+  await randomDelay();
   ordersDB.set(id, updatedOrder);
 
   return updatedOrder;
-};
+}
 
-export const deleteOrder = (id: number): boolean => {
-  return ordersDB.delete(id);
+export const deleteOrder = async (id: number): Promise<boolean> => {
+  const deleted = ordersDB.delete(id);
+  await randomDelay();
+  return fakeDBRequest(deleted);
 };
+export async function clearOrders() {
+  try {
+    await Promise.race([await randomDelay(1000, 3000), await randomFail(2500)]);
+    ordersDB.clear();
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+}
 
-export const clearOrders = (): void => {
-  ordersDB.clear();
-};
-
-export const countOrders = (): number => {
+export async function countOrders(): Promise<number> {
+  await randomDelay(200, 700);
   return ordersDB.size;
-};
+}
 
-export const searchOrdersByUserId = (userId: number | string): Order[] => {
+export const searchOrdersByUserId = async (userId: number | string): Promise<Order[]> => {
+  await Promise.race([await randomDelay(1000, 3000), await randomFail(2500)]);
+
   const id = Number(userId);
   if (!id || isNaN(id)) {
     return [];
@@ -49,12 +60,17 @@ export const searchOrdersByUserId = (userId: number | string): Order[] => {
   return Array.from(ordersDB.values()).filter((order) => order.userId === id);
 };
 
-export const searchOrders = (query: Partial<Order>): Order[] => {
+export const searchOrders = async (query: Partial<Order>): Promise<Order[]> => {
   const orders = Array.from(ordersDB.values());
 
-  return orders.filter((order) => {
+  const filteredOrders = orders.filter((order) => {
     return Object.entries(query).every(([key, value]) => {
       return String(order[key as keyof Order]) === String(value);
     });
+  });
+
+  return fakeDBRequest(filteredOrders, {
+    minDelay: 100,
+    maxDelay: 3000,
   });
 };

@@ -12,14 +12,21 @@ import {
   searchOrders,
 } from '../services/orders.service';
 
-export const getOrders = (req: Request, res: Response) => {
-  res.json(getAllOrders());
-};
+export async function getOrders(req: Request, res: Response) {
+  try {
+    const orders = await getAllOrders();
 
-export const getSingleOrder = (req: Request, res: Response) => {
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+}
+export const getSingleOrder = async (req: Request, res: Response) => {
   const id = Number(req.params.id);
 
-  const order = getOrderById(id);
+  const order = await getOrderById(id);
 
   if (!order) {
     res.status(404).json({
@@ -31,16 +38,16 @@ export const getSingleOrder = (req: Request, res: Response) => {
   res.json(order);
 };
 
-export const addOrder = (req: Request, res: Response) => {
-  const order = createOrder(req.body);
+export const addOrder = async (req: Request, res: Response) => {
+  const order = await createOrder(req.body);
 
   res.status(201).json(order);
 };
 
-export const editOrder = (req: Request, res: Response) => {
+export async function editOrder(req: Request, res: Response) {
   const id = Number(req.params.id);
 
-  const updatedOrder = updateOrder(id, req.body);
+  const updatedOrder = await updateOrder(id, req.body);
 
   if (!updatedOrder) {
     res.status(404).json({
@@ -50,14 +57,14 @@ export const editOrder = (req: Request, res: Response) => {
   }
 
   res.json(updatedOrder);
-};
+}
 
-export const removeOrder = (req: Request, res: Response) => {
+export const removeOrder = async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   if (!id) {
     return res.status(400).json({ message: 'missing id in params', success: false });
   }
-  const deleted = deleteOrder(id);
+  const deleted = await deleteOrder(id);
 
   if (!deleted) {
     return res.status(404).json({ message: 'Order not found', success: false });
@@ -66,34 +73,34 @@ export const removeOrder = (req: Request, res: Response) => {
   res.json({ success: true, message: 'success' });
 };
 
-export const removeAllOrders = (req: Request, res: Response): void => {
-  clearOrders();
+export async function removeAllOrders(req: Request, res: Response) {
+  await clearOrders();
 
   res.json({
     success: true,
   });
-};
+}
 
-export const getOrdersCount = (req: Request, res: Response): void => {
+export async function getOrdersCount(req: Request, res: Response) {
   res.json({
-    count: countOrders(),
+    count: await countOrders(),
   });
-};
+}
 
-export const searchOrderById = (req: Request, res: Response) => {
+export async function searchOrderById(req: Request, res: Response) {
   const id = req.params.id || req.query.id || req.body.id;
   if (!id) {
     return res.status(400).json({ message: 'missing id in params' });
   }
-  const orders = searchOrdersByUserId(id as string | number);
+  const orders = await searchOrdersByUserId(id as string | number);
 
   res.json(orders);
-};
+}
 
-export const querySearchOrders = (req: Request, res: Response) => {
+export async function querySearchOrders(req: Request, res: Response) {
   const query = req.query;
 
-  const orders = searchOrders(query);
+  const orders = await searchOrders(query);
 
   res.json(orders);
-};
+}

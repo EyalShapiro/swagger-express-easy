@@ -41,7 +41,8 @@
     "lint": "eslint src lib --fix",
     "format": "prettier --write src lib",
     "swagger": "ts-node -r tsconfig-paths/register lib/swagger/start.ts",
-    "exp": "node example/example.js"
+    "exp": "node example/example.js",
+    "prepare": "husky"
   },
   "peerDependencies": {
     "express": ">=4.0.0",

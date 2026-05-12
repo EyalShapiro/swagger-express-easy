@@ -113,22 +113,21 @@ export class SwaggerAuto {
         }
       }
     });
+    return server;
   }
 
   listen(
     port: number | string,
     callback?: () => void,
   ): { server?: http.Server; app?: Express; port?: number | string } {
-    if (process.env.SWAGGER_SKIP_LISTEN === 'true') {
-      return { server: undefined, app: this.app, port };
-    }
-
     const server = this.app.listen(port, callback);
     this.useServer(server);
     SwaggerAuto.handleServerErrors(server, port);
     return { server, app: this.app, port };
   }
-
+  getApp() {
+    return this.app;
+  }
   static handleServerErrors(server: http.Server, port: string | number) {
     server.on('error', (error: any) => {
       if (error?.code === 'EADDRINUSE') {

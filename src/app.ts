@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-dotenv.config({ path: ['.env.local'], debug: true });
+dotenv.config({ path: ['.env.local'], debug: false, quiet: false });
 
 import express from 'express';
 import morgan from 'morgan';
@@ -107,7 +107,17 @@ async function startServer() {
   }
 }
 
-// Run the startup
-if (process.env.SWAGGER_SKIP_LISTEN !== 'true') {
-  startServer();
-}
+process.on('SIGTERM', () => {
+  console.debug('SIGTERM signal received: closing HTTP server');
+  swagger.getApp().on('close', () => {
+    console.debug('HTTP server 1 closed');
+    process.exit(0);
+  });
+  swagger.getApp().on('error', () => {
+    console.debug('HTTP error');
+    process.exit(1);
+  });
+  process.exit(1);
+});
+
+startServer();

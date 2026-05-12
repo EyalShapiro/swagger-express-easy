@@ -15,6 +15,7 @@ import fileV1Route from './files-v1';
 import { MathController } from '../controllers/math.controller';
 import { fileUploadsRouter } from './filesUploads';
 import ordersRouter from './orders.routes';
+import { simulateAsyncError } from '@/utils/heleprAsync';
 
 const router = Router();
 const mathController = new MathController();
@@ -35,6 +36,14 @@ router.get(
   ),
 );
 
+router.get('/async-error', async (req, res, next) => {
+  try {
+    // Simulate an async error
+    await simulateAsyncError();
+  } catch (error) {
+    next(error);
+  }
+});
 router.use('/counter', counterRoutes);
 router.use('/hello', helloRoute);
 router.use('/files-pic', picFilesRoute);
