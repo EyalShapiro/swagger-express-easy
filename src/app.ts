@@ -38,20 +38,21 @@ app.get('/status', (_req, res) => {
 });
 
 app2.get('/', (_req, res) => res.send('Hello World from app2!'));
+// Use outersRouter under /myApi for the secondary app
 app2.use('/myApi', outersRouter);
-
+// Primary app routes
 app.use('/api', router);
-app.use(outersRouter);
-app.use('/api2', router);
 app.use('/weather', weatherRouter);
+// Optional additional API version
+app.use('/api2', router);
 
 // Initialize Swagger instances
 const swagger = new SwaggerAuto(app, {
   path: '/api-docs',
   watch: true,
-  endpointsRoutes: ['./src/app.ts', './src/routes/index.ts', './src/outers/index.ts'],
+  debug: process.env.NODE_ENV !== 'production',
   outputFile: './swagger.json',
-  outputDir: './dist',
+  outputDir: './swagger',
   tagsOrder: ['calculate', 'circle-area', 'fun'],
   swaggerUiOptions: {
     customSiteTitle: 'Eyal API Docs',
@@ -62,9 +63,9 @@ const swagger2 = new SwaggerAuto(app2, {
   path: '/api-docs2',
   watch: false,
   basePath: 'myApi',
-  endpointsRoutes: ['./src/app.ts', './src/routes/index.ts', './src/outers/index.ts'],
+  debug: process.env.NODE_ENV !== 'production',
   outputFile: './swagger-examples.json',
-  outputDir: './dist',
+  outputDir: './swagger',
   bearerAuth: true,
 
   swaggerUiOptions: {

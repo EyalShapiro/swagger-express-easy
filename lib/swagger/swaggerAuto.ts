@@ -42,7 +42,7 @@ export async function generateSwaggerDocs(
     }, 80);
 
     const autogenOptions = {
-      openapi: swaggerConfig.openapi || '3.0.3',
+      openapi: '3.0.0', // swagger-autogen requires exactly '3.0.0' to enable OpenAPI v3 mode
       autoHeaders: true,
       autoBody: true,
       autoQuery: true,
@@ -57,9 +57,13 @@ export async function generateSwaggerDocs(
     // Call the generator
     const result = await generator(fullPath, endpoints, swaggerConfig.document);
 
-    if (!result || !result.success) {
-      process.stdout.write(
-        '\n\x1b[33m[swagger-express-easy] Note: Some dynamic routes might require manual definitions.\x1b[0m\n',
+    if (
+      (!result || !result.success) &&
+      swaggerConfig.debug &&
+      process.env.NODE_ENV !== 'production'
+    ) {
+      console.warn(
+        '\n\x1b[33m[swagger-express-easy] Warning: Failed to automatically map some dynamic routers.\x1b[0m\n',
       );
     }
 

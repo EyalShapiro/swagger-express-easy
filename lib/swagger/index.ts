@@ -145,11 +145,13 @@ export async function setupSwagger(app: Express, options: SwaggerSetupOptions = 
 export async function getSwaggerDocument(configOptions?: SwaggerConfigOptions) {
   const config = buildSwaggerConfig(configOptions);
   try {
-    return (
-      (await readSwaggerFile(config.outputFile).catch(() => null)) ??
-      (await generateSwaggerDocs(config))
-    );
-  } catch {
+    const doc = await readSwaggerFile(config.outputFile).catch(() => null);
+    if (!doc || Object.keys(doc).length === 0) {
+      return await generateSwaggerDocs(config);
+    }
+    return doc;
+  } catch (error) {
+    console.error(error);
     return await generateSwaggerDocs(config);
   }
 }

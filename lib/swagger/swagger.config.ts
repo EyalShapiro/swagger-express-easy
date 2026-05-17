@@ -1,7 +1,8 @@
 import path from 'path';
 import fs from 'fs';
 import { SwaggerOptions } from 'swagger-ui-express';
-import _pkg from './utils/_packageJsonData';
+import _pkg, { getInitOutputFile } from './utils/_packageJsonData';
+import _packageJsonData from './utils/_packageJsonData';
 
 // ---------------------------------------------------------------------------
 //  Interfaces
@@ -56,6 +57,8 @@ export interface SwaggerConfigOptions {
   consumes?: string[];
   produces?: string[];
   definitions?: SwaggerOptions;
+  /** Log warnings when routes fail to map */
+  debug?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -68,6 +71,7 @@ export interface ResolvedSwaggerConfig extends SwaggerConfigOptions {
   endpointsRoutes: string[];
   basePath: string;
   document: Record<string, any>;
+  debug: boolean;
 }
 
 /**
@@ -75,33 +79,32 @@ export interface ResolvedSwaggerConfig extends SwaggerConfigOptions {
  */
 export function buildSwaggerConfig(options: SwaggerConfigOptions = {}): ResolvedSwaggerConfig {
   const info = {
-    title: options.info?.title ?? `${_pkg?.name ?? 'My API'} — API Docs`,
-    description: options.info?.description ?? _pkg?.description ?? 'Auto-generated Swagger docs',
-    version: options.info?.version ?? _pkg?.version ?? '1.0.0',
-    ...(options.info?.contact ? { contact: options.info.contact } : {}),
-    ...(options.info?.license ? { license: options.info.license } : {}),
+    title: options?.info?.title ?? `${_pkg?.name ?? 'My API'} — API Docs`,
+    description: options?.info?.description ?? _pkg?.description ?? 'Auto-generated Swagger docs',
+    version: options?.info?.version ?? _pkg?.version ?? '1.0.0',
+    ...(options?.info?.contact ? { contact: options?.info?.contact } : {}),
+    ...(options?.info?.license ? { license: options?.info?.license } : {}),
   };
 
-  const servers: SwaggerServerConfig[] = options.servers ?? [];
+  // Provide a default empty server url so swagger-autogen doesn't default to localhost:3000
+  const servers: SwaggerServerConfig[] = options?.servers ?? [{ url: '' }];
 
   // Security schemes
   const securitySchemes: Record<string, any> = {
-    ...(options.securityDefinitions ?? {}),
+    ...(options?.securityDefinitions ?? {}),
   };
-  if (options.bearerAuth) {
+  if (options?.bearerAuth) {
     securitySchemes.bearerAuth = {
       type: 'http',
       scheme: 'bearer',
-      bearerFormat: 'JWT',
-      description: 'Enter your JWT token',
     };
   }
 
   const globalSecurity: Array<Record<string, string[]>> =
-    options.security ?? (options.bearerAuth ? [{ bearerAuth: [] }] : []);
+    options.security ?? (options?.bearerAuth ? [{ bearerAuth: [] }] : []);
 
   const document: Record<string, any> = {
-    openapi: options.openapi ?? '3.0.3',
+    openapi: options?.openapi ?? '3.0.3',
     info,
     servers,
     components: {
@@ -109,29 +112,54 @@ export function buildSwaggerConfig(options: SwaggerConfigOptions = {}): Resolved
       securitySchemes,
     },
     security: globalSecurity,
-    ...(options.tags ? { tags: options.tags } : {}),
-    ...(options.consumes ? { consumes: options.consumes } : {}),
-    ...(options.produces ? { produces: options.produces } : {}),
-    ...(options.definitions ? { definitions: options.definitions } : {}),
-    ...(options.raw ?? {}),
+    ...(options?.tags ? { tags: options?.tags } : {}),
+    ...(options?.consumes ? { consumes: options?.consumes } : {}),
+    ...(options?.produces ? { produces: options?.produces } : {}),
+    ...(options?.definitions ? { definitions: options?.definitions } : {}),
+    ...(options?.raw ?? {}),
   };
 
   const finalOutputFile = path.resolve(
-    options.outputDir ?? process.cwd(),
-    options.outputFile ?? 'swagger-output.json',
+    options?.outputDir ?? process.cwd(),
+    options?.outputFile ?? getInitOutputFile(),
   );
 
-  const defaultEntries = ['./src/app.ts', './src/index.ts', './src/server.ts', './src/main.ts'];
-  const routesToScan = (options.endpointsRoutes ?? defaultEntries).filter((f) =>
+  function getAllSrcFiles(dir: string, fileList: string[] = []): string[] {
+    if (!fs.existsSync(dir)) return fileList;
+    const files = fs.readdirSync(dir);
+    for (const file of files) {
+      const filePath = path.join(dir, file);
+      if (fs.statSync(filePath).isDirectory()) {
+        getAllSrcFiles(filePath, fileList);
+      } else if (file.endsWith('.ts') || file.endsWith('.js')) {
+        fileList.push(filePath);
+      }
+    }
+    return fileList;
+  }
+
+  let routesToScan = (options?.endpointsRoutes ?? []).filter((f) =>
     fs.existsSync(path.resolve(process.cwd(), f)),
   );
+
+  if (routesToScan.length === 0) {
+    const srcDir = path.resolve(process.cwd(), 'src');
+    if (fs.existsSync(srcDir)) {
+      routesToScan = getAllSrcFiles(srcDir).map(
+        (p) => './' + path.relative(process.cwd(), p).replace(/\\/g, '/'),
+      );
+    } else {
+      routesToScan = ['./src/app.ts']; // fallback
+    }
+  }
 
   return {
     ...options,
     outputFile: finalOutputFile,
-    endpointsRoutes: routesToScan.length > 0 ? routesToScan : ['./src/app.ts'],
-    basePath: options.basePath ?? '/',
+    endpointsRoutes: routesToScan,
+    basePath: options?.basePath ?? '/',
     document,
+    debug: options?.debug ?? false,
   };
 }
 

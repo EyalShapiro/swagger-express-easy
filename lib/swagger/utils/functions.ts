@@ -31,14 +31,7 @@ export function getSwaggerFilePath(): string {
   return path.resolve(process.cwd(), SWAGGER_CONFIG?.outputFile || 'swagger-output.json');
 }
 
-/**
- * Checks whether the Swagger JSON file exists on disk
- *
- * @param filePath - Optional absolute or relative path (defaults to config)
- * @returns {boolean} true if file exists, false otherwise
- */
-export const checkSwaggerFile = (filePath: string = getSwaggerFilePath()): boolean =>
-  fs.existsSync(filePath);
+
 
 /**
  * Reads and safely parses the Swagger/OpenAPI JSON file from disk

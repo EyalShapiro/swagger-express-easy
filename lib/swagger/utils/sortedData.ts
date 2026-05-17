@@ -100,28 +100,18 @@ export async function applyCustomRouteDescriptions(
     return normalizedBase === '/' || routePath.startsWith(normalizedBase);
   });
 
-  // Filter the actual document paths by basePath
+  // In OpenAPI 3, basePath is handled via servers[].url.
+  // We won't ruthlessly drop paths that don't match normalizedBase anymore.
+  // We'll just ensure that servers has the correct base URL.
   if (normalizedBase !== '/') {
-    const filteredPaths: Record<string, any> = {};
-    const customRoutePaths = new Set(customRoutes.map((r) => normalizePath(r.path).toLowerCase()));
-
-    for (const [pathKey, pathValue] of Object.entries(swaggerDocument.paths || {})) {
-      const normPath = normalizePath(pathKey).toLowerCase();
-
-      // Keep path if it starts with basePath OR if it's explicitly defined in our custom routes
-      if (normPath.startsWith(normalizedBase) || customRoutePaths.has(normPath)) {
-        filteredPaths[pathKey] = pathValue;
-      }
-    }
-
-    const originalCount = Object.keys(swaggerDocument.paths).length;
-    swaggerDocument.paths = filteredPaths;
-    const filteredCount = Object.keys(filteredPaths).length;
-
-    if (originalCount > 0 && filteredCount === 0) {
-      console.warn(
-        `\x1b[33m[swagger-express-easy] Warning: All ${originalCount} routes were filtered out by basePath "${basePath}".\x1b[0m`,
-      );
+    if (!swaggerDocument.servers || swaggerDocument.servers.length === 0 || swaggerDocument.servers[0].url === '') {
+      swaggerDocument.servers = [{ url: normalizedBase }];
+    } else {
+      swaggerDocument.servers.forEach((s: any) => {
+        if (!s.url.endsWith(normalizedBase)) {
+           s.url = s.url.replace(/\/$/, '') + normalizedBase;
+        }
+      });
     }
   }
 

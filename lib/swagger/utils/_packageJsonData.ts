@@ -15,3 +15,7 @@ const _packageJsonData: Record<string, string> = (() => {
 })();
 
 export default _packageJsonData;
+export function getInitOutputFile(name = _packageJsonData.name ?? ''): string {
+  if (!name) name = _packageJsonData.name ?? '';
+  return `swagger-output${name ? `-api-${name}` : ''}.json`;
+}

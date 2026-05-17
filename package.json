@@ -40,9 +40,9 @@
     "dev": "npm run swagger && nodemon",
     "lint": "eslint src lib --fix",
     "format": "prettier --write src lib",
+    "format:check": "prettier --check src lib",
     "swagger": "ts-node -r tsconfig-paths/register lib/swagger/start.ts",
-    "exp": "node example/example.js",
-    "prepare": "husky"
+    "exp": "node example/example.js"
   },
   "peerDependencies": {
     "express": ">=4.0.0",
@@ -57,15 +57,7 @@
       "optional": true
     }
   },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,md,yml,yaml}": [
-      "prettier --write"
-    ]
-  },
+
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
@@ -88,9 +80,7 @@
     "eslint": "^9.35.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
-    "husky": "^9.1.7",
     "jest": "^30.3.0",
-    "lint-staged": "^16.4.0",
     "nodemon": "^3.1.11",
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.9",

@@ -1,0 +1,1090 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "swagger-express-easy — API Docs",
+    "description": "Auto-generated Swagger documentation using swagger-autogen",
+    "version": "0.0.1"
+  },
+  "servers": [
+    {
+      "url": "/myapi"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "default"
+        ]
+      },
+      "delete": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "default"
+        ]
+      },
+      "post": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "default"
+        ]
+      }
+    },
+    "/ping": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ping"
+        ]
+      }
+    },
+    "/status": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "status"
+        ]
+      }
+    },
+    "/add": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "description": ""
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "a": {
+                    "example": "any"
+                  },
+                  "b": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "add"
+        ]
+      }
+    },
+    "/add/{param}": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "param",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "add"
+        ]
+      }
+    },
+    "/subtract": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "a": {
+                    "example": "any"
+                  },
+                  "b": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "subtract"
+        ]
+      }
+    },
+    "/multiply": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "a": {
+                    "example": "any"
+                  },
+                  "b": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "multiply"
+        ]
+      }
+    },
+    "/divide": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "a": {
+                    "example": "any"
+                  },
+                  "b": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "divide"
+        ]
+      }
+    },
+    "/sqrt": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "sqrt"
+        ]
+      },
+      "patch": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "sqrt"
+        ]
+      }
+    },
+    "/power": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "base": {
+                    "example": "any"
+                  },
+                  "exponent": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "power"
+        ]
+      }
+    },
+    "/constants": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "constants"
+        ]
+      }
+    },
+    "/get": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "get"
+        ]
+      }
+    },
+    "/sub": {
+      "post": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "sub"
+        ]
+      }
+    },
+    "/0": {
+      "delete": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "0"
+        ]
+      }
+    },
+    "/reset": {
+      "delete": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reset"
+        ]
+      }
+    },
+    "/zero": {
+      "delete": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "zero"
+        ]
+      }
+    },
+    "/upload": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        },
+        "tags": [
+          "upload"
+        ]
+      }
+    },
+    "/uploads": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "uploads"
+        ]
+      }
+    },
+    "/random-fact": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "random-fact"
+        ]
+      }
+    },
+    "/random-fact/{id}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "random-fact"
+        ]
+      }
+    },
+    "/{id}": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "{id}"
+        ]
+      }
+    },
+    "/user": {
+      "post": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/hi/from/lib": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "hi"
+        ]
+      }
+    },
+    "/math/v2/pi": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "math"
+        ]
+      }
+    },
+    "/math/v2/square": {
+      "post": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "math"
+        ]
+      }
+    },
+    "/async-error": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "async-error"
+        ]
+      }
+    },
+    "/calculate": {
+      "post": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expression": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "calculate"
+        ]
+      }
+    },
+    "/quadratic": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "a": {
+                    "example": "any"
+                  },
+                  "b": {
+                    "example": "any"
+                  },
+                  "c": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "quadratic"
+        ]
+      }
+    },
+    "/circle-area": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "radius": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "circle-area"
+        ]
+      }
+    },
+    "/orders": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      },
+      "post": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/orders/query": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/orders/search-by-id": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/orders/count": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/orders/{id}": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      },
+      "put": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      },
+      "patch": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      },
+      "delete": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/orders/remove-all": {
+      "delete": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/profile-pic": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        },
+        "tags": [
+          "profile-pic"
+        ]
+      }
+    },
+    "/export/text": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "export"
+        ]
+      }
+    },
+    "/export/csv": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "export"
+        ]
+      }
+    },
+    "/search": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "example": "any"
+                  },
+                  "limit": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      }
+    },
+    "/users": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "users"
+        ]
+      },
+      "post": {
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/{city}": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "{city}"
+        ]
+      },
+      "post": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "{city}"
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Message": {
+        "type": "object",
+        "required": [
+          "id",
+          "text",
+          "useName"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "text": {
+            "type": "string",
+            "example": "Hello everyone!"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-05-06T20:00:00Z"
+          },
+          "useName": {
+            "type": "string",
+            "example": "Eyal"
+          },
+          "title": {
+            "type": "string",
+            "example": "General"
+          }
+        },
+        "example": {
+          "id": 1,
+          "text": "Hello everyone!",
+          "time": "2024-05-06T20:00:00Z",
+          "useName": "Eyal",
+          "title": "General"
+        }
+      },
+      "AddMessageRequest": {
+        "type": "object",
+        "required": [
+          "text",
+          "useName"
+        ],
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "useName": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "default",
+      "description": "Default endpoints"
+    },
+    {
+      "name": "ping",
+      "description": "Ping endpoints"
+    },
+    {
+      "name": "status",
+      "description": "Status endpoints"
+    },
+    {
+      "name": "add",
+      "description": "Add endpoints"
+    },
+    {
+      "name": "subtract",
+      "description": "Subtract endpoints"
+    },
+    {
+      "name": "multiply",
+      "description": "Multiply endpoints"
+    },
+    {
+      "name": "divide",
+      "description": "Divide endpoints"
+    },
+    {
+      "name": "sqrt",
+      "description": "Sqrt endpoints"
+    },
+    {
+      "name": "power",
+      "description": "Power endpoints"
+    },
+    {
+      "name": "constants",
+      "description": "Constants endpoints"
+    },
+    {
+      "name": "get",
+      "description": "Get endpoints"
+    },
+    {
+      "name": "sub",
+      "description": "Sub endpoints"
+    },
+    {
+      "name": "0",
+      "description": "0 endpoints"
+    },
+    {
+      "name": "reset",
+      "description": "Reset endpoints"
+    },
+    {
+      "name": "zero",
+      "description": "Zero endpoints"
+    },
+    {
+      "name": "upload",
+      "description": "Upload endpoints"
+    },
+    {
+      "name": "uploads",
+      "description": "Uploads endpoints"
+    },
+    {
+      "name": "random-fact",
+      "description": "Random-fact endpoints"
+    },
+    {
+      "name": "{id}",
+      "description": "{id} endpoints"
+    },
+    {
+      "name": "user",
+      "description": "User endpoints"
+    },
+    {
+      "name": "hi",
+      "description": "Hi endpoints"
+    },
+    {
+      "name": "math",
+      "description": "Math endpoints"
+    },
+    {
+      "name": "async-error",
+      "description": "Async-error endpoints"
+    },
+    {
+      "name": "calculate",
+      "description": "Calculate endpoints"
+    },
+    {
+      "name": "quadratic",
+      "description": "Quadratic endpoints"
+    },
+    {
+      "name": "circle-area",
+      "description": "Circle-area endpoints"
+    },
+    {
+      "name": "orders",
+      "description": "Orders endpoints"
+    },
+    {
+      "name": "profile-pic",
+      "description": "Profile-pic endpoints"
+    },
+    {
+      "name": "export",
+      "description": "Export endpoints"
+    },
+    {
+      "name": "search",
+      "description": "Search endpoints"
+    },
+    {
+      "name": "users",
+      "description": "Users endpoints"
+    },
+    {
+      "name": "{city}",
+      "description": "{city} endpoints"
+    }
+  ]
+}
