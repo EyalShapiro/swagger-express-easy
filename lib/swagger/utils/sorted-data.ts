@@ -1,13 +1,17 @@
 import { JsonObject } from 'swagger-ui-express';
-import { readSwaggerFile, normalizePath } from './functions';
+import { readSwaggerFile } from './fs-helper';
+import { normalizePath } from './path-helper';
 import { SwaggerRouteStore } from '../routeStore';
+import { getSchema } from './getSchema';
 
 /**
- * Organizes Swagger document paths into tags based on the segments of the path.
+ * Organizes Swagger document paths into tags based on the segments of the path,
+ * and optionally sorts tags according to a tagsOrder array.
  */
 export function organizeSwaggerTags(
   swaggerDocument: JsonObject,
   basePath: string = '/',
+  tagsOrder?: string[],
 ): JsonObject {
   const normalizedBase = basePath.replace(/^\/|\/$/g, '').toLowerCase();
 
@@ -23,11 +27,9 @@ export function organizeSwaggerTags(
     let tagName = 'default';
 
     if (segments.length > 0) {
-      if (normalizedBase && segments[0]?.toLowerCase() === normalizedBase && segments.length > 1) {
-        tagName = segments[1];
-      } else {
-        tagName = segments[0];
-      }
+      const isBaseTagNane =
+        normalizedBase && segments[0]?.toLowerCase() === normalizedBase && segments.length > 1;
+      tagName = segments[isBaseTagNane ? 1 : 0];
     }
 
     if (!existingTagNames.has(tagName)) {
@@ -48,6 +50,24 @@ export function organizeSwaggerTags(
       }
     }
   }
+
+  // Sort tags according to tagsOrder if provided
+  if (tagsOrder && tagsOrder.length > 0) {
+    const orderMap = tagsOrder.reduce((acc, tag, index) => {
+      acc.set(tag.toLowerCase(), index);
+      return acc;
+    }, new Map<string, number>());
+
+    (swaggerDocument.tags as SwaggerTag[]).sort((a, b) => {
+      const aIdx = orderMap.get(a.name.toLowerCase()) ?? tagsOrder.length + 1;
+      const bIdx = orderMap.get(b.name.toLowerCase()) ?? tagsOrder.length + 1;
+
+      if (aIdx !== bIdx) return aIdx - bIdx;
+      // For unspecified tags, sort alphabetically
+      return a.name.localeCompare(b.name);
+    });
+  }
+
   return swaggerDocument;
 }
 
@@ -93,24 +113,51 @@ export async function applyCustomRouteDescriptions(
 
   // Filter custom routes from the global store that match this instance's base path
   const allCustomRoutes = SwaggerRouteStore.getRouteList();
-  const customRoutes = allCustomRoutes.filter((route) => {
-    const routePath = route.path.startsWith('/')
-      ? route.path.toLowerCase()
-      : `/${route.path.toLowerCase()}`;
+  const customRoutes = allCustomRoutes.filter(({ path }) => {
+    const routePath = path?.startsWith('/') ? path.toLowerCase() : `/${path.toLowerCase()}`;
     return normalizedBase === '/' || routePath.startsWith(normalizedBase);
   });
 
-  // In OpenAPI 3, basePath is handled via servers[].url.
-  // We won't ruthlessly drop paths that don't match normalizedBase anymore.
-  // We'll just ensure that servers has the correct base URL.
+  // Automatic Path Prefixing for multi-instance isolation
   if (normalizedBase !== '/') {
-    if (!swaggerDocument.servers || swaggerDocument.servers.length === 0 || swaggerDocument.servers[0].url === '') {
+    const properBase = basePath?.startsWith('/') ? basePath : `/${basePath}`;
+    const prefixedPaths: JsonObject = {};
+    const cleanBase = properBase?.endsWith('/') ? properBase?.slice(0, -1) : properBase;
+
+    for (const [pathKey, pathValue] of Object.entries(swaggerDocument.paths || {})) {
+      if (pathKey.toLowerCase().startsWith(normalizedBase)) {
+        const cleanPath = pathKey?.startsWith('/') ? pathKey : `/${pathKey}`;
+        const newPathKey = `${cleanBase}${cleanPath}`.replace(/\/+/g, '/');
+        prefixedPaths[newPathKey] = pathValue;
+      } else {
+        prefixedPaths[pathKey] = pathValue;
+      }
+    }
+    swaggerDocument.paths = prefixedPaths;
+
+    // Filter paths on the document to match this instance's base path for isolation
+    swaggerDocument.paths = Object.fromEntries(
+      Object.entries(swaggerDocument.paths).filter(([pathKey]) => {
+        return pathKey?.toLowerCase()?.startsWith(normalizedBase);
+      }),
+    );
+  }
+
+  // In OpenAPI 3, basePath is handled via servers[].url.
+  // We'll ensure that servers has the correct base URL.
+  if (normalizedBase !== '/') {
+    if (
+      !swaggerDocument.servers ||
+      swaggerDocument.servers.length === 0 ||
+      swaggerDocument.servers[0].url === ''
+    ) {
       swaggerDocument.servers = [{ url: normalizedBase }];
     } else {
-      swaggerDocument.servers.forEach((s: any) => {
+      swaggerDocument.servers = swaggerDocument.servers.map((s: any) => {
         if (!s.url.endsWith(normalizedBase)) {
-           s.url = s.url.replace(/\/$/, '') + normalizedBase;
+          s.url = s.url.replace(/\/$/, '') + normalizedBase;
         }
+        return s;
       });
     }
   }
@@ -159,22 +206,7 @@ export async function applyCustomRouteDescriptions(
       const op = pathItem[method];
       let requestBody = undefined;
       if (body && typeof body === 'object') {
-        let schema: Record<string, unknown> = {};
-        if ('$ref' in body) {
-          schema = { $ref: body.$ref };
-        } else if ('type' in body && body.type === 'object') {
-          schema = body; // Direct schema
-        } else {
-          const properties: Record<string, Record<string, unknown>> = {};
-          for (const key in body) {
-            if (key === 'default') continue;
-            const val = (body as Record<string, unknown>)[key];
-            const type = typeof val;
-            properties[key] = { type: type === 'object' ? 'object' : type, example: val };
-          }
-          const requiredNotDefault = Object.keys(body).filter((k) => k !== 'default');
-          schema = { type: 'object', required: requiredNotDefault, properties };
-        }
+        const schema: Record<string, unknown> = getSchema(body);
         requestBody = { content: { 'application/json': { schema } } };
       }
 
@@ -194,7 +226,56 @@ export async function applyCustomRouteDescriptions(
 
       // Fix for duplicated parameters: deduplicate by name and in location
       if (parameters && Array.isArray(parameters)) {
-        op.parameters = mergeParameters(op.parameters, parameters);
+        // Separate formData params (Swagger 2.0) from standard OpenAPI 3 params
+        const formDataParams = parameters.filter((p) => p.in === 'formData');
+        const regularParams = parameters.filter((p) => p.in !== 'formData');
+
+        if (formDataParams.length > 0) {
+          // Convert formData params to OpenAPI 3.0 requestBody (multipart/form-data)
+          const properties: Record<string, any> = {};
+          const required: string[] = [];
+          const encoding: Record<string, any> = {};
+
+          for (const param of formDataParams) {
+            const name = param.name || 'file';
+
+            if (param.type === 'file') {
+              // Single file upload
+              properties[name] = { type: 'string', format: 'binary' };
+            } else if (param.type === 'array' && param.items?.type === 'file') {
+              // Multiple file upload
+              properties[name] = {
+                type: 'array',
+                items: { type: 'string', format: 'binary' },
+              };
+              encoding[name] = { contentType: 'application/octet-stream' };
+            } else {
+              // Regular formData field
+              properties[name] = { type: param.type || 'string' };
+            }
+
+            if (param.description) properties[name].description = param.description;
+            if (param.required) required.push(name);
+          }
+
+          op.requestBody = {
+            required: required.length > 0,
+            content: {
+              'multipart/form-data': {
+                schema: {
+                  type: 'object',
+                  properties,
+                  ...(required.length > 0 ? { required } : {}),
+                },
+                ...(Object.keys(encoding).length > 0 ? { encoding } : {}),
+              },
+            },
+          };
+        }
+
+        if (regularParams.length > 0) {
+          op.parameters = mergeParameters(op.parameters, regularParams);
+        }
       }
 
       if (responses && typeof responses === 'object') {

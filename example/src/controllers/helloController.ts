@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import ERROR_MSG from '../constant/error_msg';
 
-import { withSwagger } from '../../lib/swagger/decorators';
+import { withSwagger } from 'swagger-express-easy';
 
 export const getHello = withSwagger(
   {
@@ -26,6 +26,9 @@ export const getHelloById = (req: Request, res: Response) => {
   try {
     const statusCode = 200;
     const { id } = req.params;
+
+    console.log(req.params, req.query);
+
     const timeStamp = res.locals?.timeStamp || new Date().toUTCString();
 
     res.status(statusCode).json({ message: `Hello id=${id}`, statusCode, timeStamp });

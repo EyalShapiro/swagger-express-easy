@@ -3,12 +3,10 @@ import fs from 'fs';
 import swaggerAutogenFactory from 'swagger-autogen';
 import { JsonObject, SwaggerOptions } from 'swagger-ui-express';
 
-import { SWAGGER_CONFIG, SwaggerConfigOptions } from './swagger.config';
-import { updateSwaggerFile } from './utils/functions';
-import { applyCustomRouteDescriptions, organizeSwaggerTags } from './utils/sortedData';
+import { SWAGGER_CONFIG, SwaggerConfigOptions } from './swagger-config';
+import { updateSwaggerFile } from './utils/fs-helper';
+import { applyCustomRouteDescriptions, organizeSwaggerTags } from './utils/sorted-data';
 import { getRegisteredSchemas } from './schemas';
-
-// Load swagger-autogen factory
 
 const FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 function loadingBar(i: number, basePath: string) {
@@ -80,7 +78,11 @@ export async function generateSwaggerDocs(
     }
 
     // Organize tags
-    const organizedSwaggerDoc = organizeSwaggerTags(swaggerDocument, basePath);
+    const organizedSwaggerDoc = organizeSwaggerTags(
+      swaggerDocument,
+      basePath,
+      swaggerConfig.tagsOrder,
+    );
 
     // Final update
     await updateSwaggerFile(organizedSwaggerDoc, fullPath);

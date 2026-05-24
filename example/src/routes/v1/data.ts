@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { createSwaggerRoute } from '../../../lib/swagger/routeStore/index';
+import { createSwaggerRoute } from 'swagger-express-easy';
 
 const router = Router();
 

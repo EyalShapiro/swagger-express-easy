@@ -47,10 +47,23 @@ export class SwaggerRouteStore {
 
   public static addRoute(route: SwaggerRouteDefinition | SwaggerRouteDefinition[]): void {
     const store = SwaggerRouteStore.getData();
+    const addSingle = (r: SwaggerRouteDefinition) => {
+      const idx = store.routes.findIndex(
+        (existing) =>
+          existing.path.toLowerCase() === r.path.toLowerCase() &&
+          existing.method.toLowerCase() === r.method.toLowerCase(),
+      );
+      if (idx !== -1) {
+        store.routes[idx] = r;
+      } else {
+        store.routes.push(r);
+      }
+    };
+
     if (Array.isArray(route)) {
-      store.routes.push(...route);
+      route.forEach(addSingle);
     } else {
-      store.routes.push(route);
+      addSingle(route);
     }
   }
 

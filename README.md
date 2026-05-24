@@ -10,13 +10,14 @@ Stop writing manual JSON/YAML — just write your code, and let us handle the re
 
 ## ✨ Features
 
-- **Auto-Generation**: Automatically scans your Express routes.
+- **Auto-Generation & Discovery**: Automatically recursively scans your `src/` folder for routes by default if no path is configured.
 - **Watch Mode**: Live updates to Swagger UI as you code.
 - **Type-Safe Schemas**: Define reusable Entities with a simple API.
 - **Programmatic Metadata**: Annotate routes directly in your route files.
 - **File Upload Support**: Easy documentation for `multipart/form-data`.
 - **Multi-Instance Support**: Run multiple Swagger servers with isolated routes in a single process.
 - **Zero Configuration**: Smart defaults from your `package.json`.
+- **Monorepo Ready**: Modern workspace separating the production library (`lib/`) from standalone examples (`example/`).
 
 ---
 
@@ -24,6 +25,20 @@ Stop writing manual JSON/YAML — just write your code, and let us handle the re
 
 ```bash
 npm install swagger-express-easy
+```
+
+---
+
+## 🏃 Running Examples
+
+We use a modern Monorepo structure. To start the demonstration/example server locally:
+
+```bash
+# Install all dependencies across workspace
+npm install
+
+# Start the dev example application
+npm run dev
 ```
 
 ---

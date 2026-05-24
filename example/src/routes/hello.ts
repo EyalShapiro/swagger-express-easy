@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import express from 'express';
 import { getHello, getHelloById, postHello, postUser } from '../controllers/helloController';
-import { createSwaggerRoute } from '../../lib/swagger/routeStore';
+import { createSwaggerRoute } from 'swagger-express-easy';
 
-const router = Router();
+const router = express.Router();
 
 createSwaggerRoute({
   method: 'get',
@@ -40,8 +40,9 @@ createSwaggerRoute({
   body: { name: 'Default User', age: 30 },
 });
 
-router.get('/', getHelloById);
 router.get('/:id', getHelloById);
+
+router.get('/', getHelloById);
 
 router.post('/', postHello);
 router.post('/user', postUser);

@@ -48,11 +48,28 @@ router.use('/counter', counterRoutes);
 router.use('/hello', helloRoute);
 router.use('/files-pic', picFilesRoute);
 router.use('/files-uploads', fileUploadsRouter);
-router.use('/files-1v', fileV1Route);
+router.use('/files-v1', fileV1Route);
+router.use((req, res, next) => {
+  console.log('%s %s %s', req.method, req.url, req.path);
+  next();
+});
 
 router.use('/message-board', messageBoardRoute);
 router.use('/fuc', funFa);
 router.use('/v1', apiV1Route);
 router.use('/math', mathRoute);
+router.get(
+  '/example/b',
+  (_req, _res, next) => {
+    console.log('the response will be sent by the next function ...');
+    next();
+  },
+  (_req, res) => {
+    res.send('Hello from B!');
+  },
+);
 
+router.get('/random.text', (_req, res) => {
+  res.send('random.text');
+});
 export default router;

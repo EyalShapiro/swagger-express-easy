@@ -1,13 +1,13 @@
 import express from 'express';
 import { SwaggerAuto } from '../../lib/swagger';
-import * as functions from '../../lib/swagger/utils/functions';
+import * as fsHelper from '../../lib/swagger/utils/fs-helper';
 import { SwaggerRouteStore } from '../../lib/swagger/routeStore';
 import { JsonObject } from 'swagger-ui-express';
 
 // Mock the file system utilities
-jest.mock('../../lib/swagger/utils/functions', () => {
+jest.mock('../../lib/swagger/utils/fs-helper', () => {
   return {
-    ...jest.requireActual('../../lib/swagger/utils/functions'),
+    ...jest.requireActual('../../lib/swagger/utils/fs-helper'),
     readSwaggerFile: jest.fn(),
     updateSwaggerFile: jest.fn().mockResolvedValue(undefined),
     getSwaggerFilePath: jest.fn().mockReturnValue('mock-path.json'),
@@ -42,7 +42,7 @@ describe('Multi-Instance Swagger Isolation', () => {
     };
 
     // IMPORTANT: Return a CLONE so each call gets a fresh object
-    (functions.readSwaggerFile as jest.Mock).mockImplementation(async () => {
+    (fsHelper.readSwaggerFile as jest.Mock).mockImplementation(async () => {
       return JSON.parse(JSON.stringify(mockDoc));
     });
   });

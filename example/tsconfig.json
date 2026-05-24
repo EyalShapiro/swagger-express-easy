@@ -20,11 +20,11 @@
     "baseUrl": "./",
     "paths": {
       "@/*": ["src/*"],
-      "swagger-express-easy": ["lib/index.ts"],
-      "swagger-express-easy/*": ["lib/*"]
+      "swagger-express-easy": ["../../lib/index.ts"],
+      "swagger-express-easy/*": ["../../lib/*"]
     }
   },
-  "include": ["lib/**/*.ts", "tests/**/*.ts"],
+  "include": ["src/**/*.ts", "../lib/**/*.ts", "../tests/**/*.ts"],
   "ts-node": {
     "compilerOptions": {
       "module": "commonjs"

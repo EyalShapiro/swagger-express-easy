@@ -8,7 +8,7 @@ import { withSwagger, SwaggerRoute } from './swagger/decorators';
  * Re-export core classes and types.
  */
 export * from './swagger';
-export * from './swagger/swagger.config';
+export * from './swagger/swagger-config';
 export * from './swagger/schemas';
 export * from './swagger/routeStore';
 export * from './swagger/decorators';
@@ -27,7 +27,7 @@ export async function setupSwagger(app: Express, options: SwaggerSetupOptions = 
 /**
  * Export a default object for convenience.
  */
-export default {
+export const SwaggerExpressEasy = {
   SwaggerAuto,
   setupSwagger,
   defineSchema,
@@ -36,3 +36,5 @@ export default {
   withSwagger,
   SwaggerRoute,
 };
+
+export default SwaggerExpressEasy;

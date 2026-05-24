@@ -1,10 +1,12 @@
 import { Express, Request, Response, NextFunction } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import http from 'http';
-import { generateSwaggerDocs } from './swaggerAuto';
-import { getAddrFormatToLocal, readSwaggerFile } from './utils/functions';
-import { SwaggerConfigOptions, buildSwaggerConfig, ResolvedSwaggerConfig } from './swagger.config';
-import { applyCustomRouteDescriptions, organizeSwaggerTags } from './utils/sortedData';
+import { generateSwaggerDocs } from './swagger-auto';
+import { getAddrFormatToLocal } from './utils/path-helper';
+import { readSwaggerFile } from './utils/fs-helper';
+import { SwaggerConfigOptions, buildSwaggerConfig, ResolvedSwaggerConfig } from './swagger-config';
+import { applyCustomRouteDescriptions, organizeSwaggerTags } from './utils/sorted-data';
+import { IS_PROD } from './env-config';
 
 // ---------------------------------------------------------------------------
 //  Types
@@ -26,6 +28,7 @@ export class SwaggerAuto {
   private swaggerDocument: any = null;
   private initializationError: Error | null = null;
   private config: ResolvedSwaggerConfig;
+  private detectedServerUrl: string | null = null;
 
   constructor(app: Express, options: SwaggerSetupOptions = {}) {
     this.app = app;
@@ -51,10 +54,25 @@ export class SwaggerAuto {
           });
         }
 
+        // Inject the detected server URL into the document dynamically on each request,
+        // so that the Swagger UI dropdown always reflects the actual running server.
+        let doc = this.swaggerDocument;
+        if (this.detectedServerUrl && doc) {
+          doc = {
+            ...doc,
+            servers: [
+              { url: this.detectedServerUrl, description: 'Local server' },
+              ...(doc.servers || []).filter(
+                (s: any) => s.url && s.url !== '' && s.url !== this.detectedServerUrl,
+              ),
+            ],
+          };
+        }
+
         const uiOptions: swaggerUi.SwaggerUiOptions = {
           ...this.options?.swaggerUiOptions,
         };
-        const swaggerControls = swaggerUi.setup(this.swaggerDocument, uiOptions);
+        const swaggerControls = swaggerUi.setup(doc, uiOptions);
         return swaggerControls(req, res, next);
       };
 
@@ -76,7 +94,11 @@ export class SwaggerAuto {
           this.config.basePath,
           rawDocument,
         );
-        this.swaggerDocument = organizeSwaggerTags(filteredDoc, this.config.basePath);
+        this.swaggerDocument = organizeSwaggerTags(
+          filteredDoc,
+          this.config.basePath,
+          this.config.tagsOrder,
+        );
       }
 
       this.app.use(swaggerPath, swaggerUi.serve, customSwaggerHandler);
@@ -103,10 +125,12 @@ export class SwaggerAuto {
       if (addr && typeof addr === 'object') {
         const port = addr.port;
         const host = getAddrFormatToLocal(addr.address);
+        this.detectedServerUrl = `http://${host}:${port}`;
 
         if (this.swaggerDocument) {
+          // Update the live document so /api-docs.json always returns correct servers
           this.swaggerDocument.servers = [
-            { url: `http://${host}:${port}`, description: 'Auto-detected server' },
+            { url: this.detectedServerUrl, description: 'Local server' },
           ];
           // Support swagger-autogen host field
           this.swaggerDocument.host = `${host}:${port}`;
@@ -145,11 +169,15 @@ export async function setupSwagger(app: Express, options: SwaggerSetupOptions = 
 export async function getSwaggerDocument(configOptions?: SwaggerConfigOptions) {
   const config = buildSwaggerConfig(configOptions);
   try {
-    const doc = await readSwaggerFile(config.outputFile).catch(() => null);
-    if (!doc || Object.keys(doc).length === 0) {
-      return await generateSwaggerDocs(config);
+    // Only use cached file from disk in production to support read-only file systems
+    if (IS_PROD) {
+      const doc = await readSwaggerFile(config.outputFile).catch(() => null);
+      if (doc && Object.keys(doc).length > 0) {
+        return doc;
+      }
     }
-    return doc;
+    // In development/testing, always generate fresh documentation to reflect latest route changes
+    return await generateSwaggerDocs(config);
   } catch (error) {
     console.error(error);
     return await generateSwaggerDocs(config);

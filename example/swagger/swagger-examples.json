@@ -1,0 +1,139 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "example-app — API Docs",
+    "description": "Auto-generated Swagger docs",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/myapi"
+    }
+  ],
+  "paths": {
+    "/myApi/": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "myApi"
+        ]
+      }
+    },
+    "/myApi/ping": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "ping"
+        ]
+      }
+    },
+    "/myApi/status": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "status"
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Message": {
+        "type": "object",
+        "required": [
+          "id",
+          "text",
+          "useName"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "text": {
+            "type": "string",
+            "example": "Hello everyone!"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-05-06T20:00:00Z"
+          },
+          "useName": {
+            "type": "string",
+            "example": "Eyal"
+          },
+          "title": {
+            "type": "string",
+            "example": "General"
+          }
+        },
+        "example": {
+          "id": 1,
+          "text": "Hello everyone!",
+          "time": "2024-05-06T20:00:00Z",
+          "useName": "Eyal",
+          "title": "General"
+        }
+      },
+      "AddMessageRequest": {
+        "type": "object",
+        "required": [
+          "text",
+          "useName"
+        ],
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "useName": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "myApi",
+      "description": "MyApi endpoints"
+    },
+    {
+      "name": "ping",
+      "description": "Ping endpoints"
+    },
+    {
+      "name": "status",
+      "description": "Status endpoints"
+    }
+  ]
+}

@@ -1,8 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import { SwaggerOptions } from 'swagger-ui-express';
-import _pkg, { getInitOutputFile } from './utils/_packageJsonData';
-import _packageJsonData from './utils/_packageJsonData';
+import pkg, { getInitOutputFile } from './utils/package-json-helper';
 
 // ---------------------------------------------------------------------------
 //  Interfaces
@@ -61,10 +60,6 @@ export interface SwaggerConfigOptions {
   debug?: boolean;
 }
 
-// ---------------------------------------------------------------------------
-//  Builder
-// ---------------------------------------------------------------------------
-
 /** Fully resolved config returned by buildSwaggerConfig */
 export interface ResolvedSwaggerConfig extends SwaggerConfigOptions {
   outputFile: string;
@@ -79,9 +74,9 @@ export interface ResolvedSwaggerConfig extends SwaggerConfigOptions {
  */
 export function buildSwaggerConfig(options: SwaggerConfigOptions = {}): ResolvedSwaggerConfig {
   const info = {
-    title: options?.info?.title ?? `${_pkg?.name ?? 'My API'} — API Docs`,
-    description: options?.info?.description ?? _pkg?.description ?? 'Auto-generated Swagger docs',
-    version: options?.info?.version ?? _pkg?.version ?? '1.0.0',
+    title: options?.info?.title ?? `${pkg?.name ?? 'My API'} — API Docs`,
+    description: options?.info?.description ?? pkg?.description ?? 'Auto-generated Swagger docs',
+    version: options?.info?.version ?? pkg?.version ?? '1.0.0',
     ...(options?.info?.contact ? { contact: options?.info?.contact } : {}),
     ...(options?.info?.license ? { license: options?.info?.license } : {}),
   };
@@ -143,13 +138,28 @@ export function buildSwaggerConfig(options: SwaggerConfigOptions = {}): Resolved
   );
 
   if (routesToScan.length === 0) {
-    const srcDir = path.resolve(process.cwd(), 'src');
-    if (fs.existsSync(srcDir)) {
-      routesToScan = getAllSrcFiles(srcDir).map(
-        (p) => './' + path.relative(process.cwd(), p).replace(/\\/g, '/'),
-      );
+    const commonEntrypoints = [
+      './src/app.ts',
+      './src/index.ts',
+      './src/server.ts',
+      './src/main.ts',
+      './src/app.js',
+      './src/index.js',
+      './src/server.js',
+      './src/main.js',
+    ];
+    const entrypoint = commonEntrypoints.find((f) => fs.existsSync(path.resolve(process.cwd(), f)));
+    if (entrypoint) {
+      routesToScan = [entrypoint];
     } else {
-      routesToScan = ['./src/app.ts']; // fallback
+      const srcDir = path.resolve(process.cwd(), 'src');
+      if (fs.existsSync(srcDir)) {
+        routesToScan = getAllSrcFiles(srcDir).map(
+          (p) => './' + path.relative(process.cwd(), p).replace(/\\/g, '/'),
+        );
+      } else {
+        routesToScan = ['./src/app.ts']; // fallback
+      }
     }
   }
 
@@ -159,7 +169,7 @@ export function buildSwaggerConfig(options: SwaggerConfigOptions = {}): Resolved
     endpointsRoutes: routesToScan,
     basePath: options?.basePath ?? '/',
     document,
-    debug: options?.debug ?? false,
+    debug: options?.debug ?? process.env.NODE_ENV !== 'production',
   };
 }
 

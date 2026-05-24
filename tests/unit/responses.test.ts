@@ -1,9 +1,11 @@
-import { applyCustomRouteDescriptions } from '../../lib/swagger/utils/sortedData';
+import { applyCustomRouteDescriptions } from '../../lib/swagger/utils/sorted-data';
 import { SwaggerRouteStore } from '../../lib/swagger/routeStore';
-import * as functions from '../../lib/swagger/utils/functions';
+import * as fsHelper from '../../lib/swagger/utils/fs-helper';
 
-jest.mock('../../lib/swagger/utils/functions', () => ({
+jest.mock('../../lib/swagger/utils/fs-helper', () => ({
   readSwaggerFile: jest.fn(),
+}));
+jest.mock('../../lib/swagger/utils/path-helper', () => ({
   normalizePath: jest.fn((p) => p),
 }));
 
@@ -15,7 +17,7 @@ describe('sortedData - Responses and Tags', () => {
 
   test('should merge responses correctly', async () => {
     // Mock the generated swagger file
-    (functions.readSwaggerFile as jest.Mock).mockResolvedValue({
+    (fsHelper.readSwaggerFile as jest.Mock).mockResolvedValue({
       paths: {
         '/api/test': {
           get: {
@@ -44,7 +46,7 @@ describe('sortedData - Responses and Tags', () => {
   });
 
   test('should gracefully handle empty responses', async () => {
-    (functions.readSwaggerFile as jest.Mock).mockResolvedValue({
+    (fsHelper.readSwaggerFile as jest.Mock).mockResolvedValue({
       paths: {
         '/api/empty': {
           get: { responses: { 200: { description: 'OK' } } },

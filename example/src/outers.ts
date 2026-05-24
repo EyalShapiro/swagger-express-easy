@@ -1,4 +1,3 @@
-// src/routes/math.router.ts
 
 import { Router, Request, Response } from 'express';
 
@@ -33,7 +32,7 @@ outersRouter.post('/add/:param', (req: Request, res: Response) => {
 /*
 POST /math/subtract
 */
-outersRouter.post('/subtract', (req: Request, res: Response) => {
+outersRouter.post('/subtract', (req, res) => {
   const { a, b } = req.body;
 
   res.json({
@@ -45,7 +44,7 @@ outersRouter.post('/subtract', (req: Request, res: Response) => {
 /*
 POST /math/multiply
 */
-outersRouter.post('/multiply', (req: Request, res: Response) => {
+outersRouter.post('/multiply', (req, res) => {
   const { a, b } = req.body;
 
   res.json({

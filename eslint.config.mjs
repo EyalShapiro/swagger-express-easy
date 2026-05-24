@@ -13,7 +13,8 @@ export default tseslint.config(
     files: ['**/*.ts'],
     languageOptions: {
       parserOptions: {
-        project: './tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
+        project: ['./tsconfig.json', './example/tsconfig.json'],
         projectFolderIgnoreList: ['**/node_modules/**'],
       },
     },
@@ -32,5 +33,5 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': 'warn',
     },
-  },
+  }
 );

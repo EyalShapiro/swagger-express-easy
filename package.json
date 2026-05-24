@@ -14,6 +14,9 @@
     "dist",
     "README.md"
   ],
+  "workspaces": [
+    "example"
+  ],
   "exports": {
     ".": {
       "require": "./dist/index.js",
@@ -36,13 +39,11 @@
     "test": "jest",
     "build": "npx rimraf dist && tsc -p tsconfig.build.json",
     "prepublishOnly": "npm run build",
-    "start": "node dist/src/app.js",
-    "dev": "npm run swagger && nodemon",
-    "lint": "eslint src lib --fix",
-    "format": "prettier --write src lib",
-    "format:check": "prettier --check src lib",
-    "swagger": "ts-node -r tsconfig-paths/register lib/swagger/start.ts",
-    "exp": "node example/example.js"
+    "dev:examples": "npm run dev --prefix example",
+    "dev": "npm run dev:examples",
+    "lint": "eslint example/src lib --fix",
+    "format": "prettier --write example/src lib",
+    "format:check": "prettier --check example/src lib"
   },
   "peerDependencies": {
     "express": ">=4.0.0",
@@ -59,20 +60,11 @@
   },
 
   "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.2",
-    "express": ">=4.0.0",
-    "morgan": "^1.10.1",
-    "multer": "^2.0.2",
     "swagger-autogen": ">=2.23.0",
     "swagger-ui-express": ">=4.0.0"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.3",
     "@types/jest": "^30.0.0",
-    "@types/morgan": "^1.9.10",
-    "@types/multer": "^2.0.0",
     "@types/node": "^24.5.2",
     "@types/swagger-ui-express": "^4.1.8",
     "@typescript-eslint/eslint-plugin": "^8.44.0",
@@ -81,7 +73,6 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
     "jest": "^30.3.0",
-    "nodemon": "^3.1.11",
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2",

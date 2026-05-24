@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const _packageJsonData: Record<string, string> = (() => {
+const packageJsonData: Record<string, string> = (() => {
   try {
     const pkgPath = path.join(process.cwd(), 'package.json');
     if (fs.existsSync(pkgPath)) {
@@ -14,8 +14,8 @@ const _packageJsonData: Record<string, string> = (() => {
   }
 })();
 
-export default _packageJsonData;
-export function getInitOutputFile(name = _packageJsonData.name ?? ''): string {
-  if (!name) name = _packageJsonData.name ?? '';
+export default packageJsonData;
+export function getInitOutputFile(name = packageJsonData.name ?? ''): string {
+  if (!name) name = packageJsonData.name ?? '';
   return `swagger-output${name ? `-api-${name}` : ''}.json`;
 }
