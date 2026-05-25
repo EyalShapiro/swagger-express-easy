@@ -1,5 +1,5 @@
 import express from 'express';
-import { getHello, getHelloById, postHello, postUser } from '../controllers/helloController';
+import { getHello, getHelloById, postHello, postUserHi } from '../controllers/helloController';
 import { createSwaggerRoute } from 'swagger-express-easy';
 
 const router = express.Router();
@@ -45,7 +45,7 @@ router.get('/:id', getHelloById);
 router.get('/', getHelloById);
 
 router.post('/', postHello);
-router.post('/user', postUser);
+router.post('/user-hi', postUserHi);
 router.get('/hi/from/lib', getHello);
 
 export default router;

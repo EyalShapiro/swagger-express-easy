@@ -1,33 +1,6 @@
-/**
- * Definition of a single Swagger route.
- */
-export interface SwaggerRouteDefinition {
-  /** HTTP method (get, post, put, delete, patch, etc.) */
-  method: string;
-  /** Full path including parameters (e.g. /api/users/{id}) */
-  path: string;
-  /** Metadata for the route (description, summary) */
-  description?: {
-    text?: string;
-    summary?: string;
-  };
-  /** Request body schema or example */
-  body?: any;
-  /** List of parameters (query, path, header) */
-  parameters?: any[];
-  /** Expected responses and their schemas */
-  responses?: Record<string, any>;
-  /** Optional tag for grouping in UI */
-  tag?: string;
-  /** Multiple tags for grouping */
-  tags?: string[];
-  /** Media types the route consumes */
-  consumes?: string[];
-  /** Media types the route produces */
-  produces?: string[];
-  /** Security requirements for this route */
-  security?: Array<Record<string, string[]>>;
-}
+import { SwaggerRouteDefinition } from './type';
+
+export * from './type';
 
 /**
  * Singleton store for manual route definitions.
@@ -49,22 +22,15 @@ export class SwaggerRouteStore {
     const store = SwaggerRouteStore.getData();
     const addSingle = (r: SwaggerRouteDefinition) => {
       const idx = store.routes.findIndex(
-        (existing) =>
-          existing.path.toLowerCase() === r.path.toLowerCase() &&
-          existing.method.toLowerCase() === r.method.toLowerCase(),
+        ({ method, path }) =>
+          path.toLowerCase() === r.path.toLowerCase() &&
+          method.toLowerCase() === r.method.toLowerCase(),
       );
-      if (idx !== -1) {
-        store.routes[idx] = r;
-      } else {
-        store.routes.push(r);
-      }
+      if (idx !== -1) store.routes[idx] = r;
+      else store.routes.push(r);
     };
-
-    if (Array.isArray(route)) {
-      route.forEach(addSingle);
-    } else {
-      addSingle(route);
-    }
+    if (Array.isArray(route)) route.forEach(addSingle);
+    else addSingle(route);
   }
 
   public static getRouteList(): SwaggerRouteDefinition[] {
@@ -85,8 +51,3 @@ export function createSwaggerRoute(
 ): void {
   SwaggerRouteStore.addRoute(routeDef);
 }
-
-/**
- * Alias for createSwaggerRoute. Supports single or multiple routes.
- */
-export const createSwaggerRoutes = createSwaggerRoute;

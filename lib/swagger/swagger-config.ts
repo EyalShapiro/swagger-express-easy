@@ -42,7 +42,17 @@ export interface SwaggerConfigOptions {
    * Add Bearer JWT auth to the document.
    * @default false
    */
-  bearerAuth?: boolean;
+  bearerAuth?: boolean | { name?: string; description?: string };
+  /**
+   * Add API Key auth to the document.
+   * @default false
+   */
+  apiKeyAuth?: boolean | { name: string; in?: 'header' | 'query' | 'cookie' };
+  /**
+   * Global case-sensitive path matching when applying manual routes.
+   * @default false
+   */
+  caseSensitive?: boolean;
   /** Extra security-scheme definitions */
   securityDefinitions?: SwaggerOptions;
   /** Global security requirements */
@@ -89,14 +99,30 @@ export function buildSwaggerConfig(options: SwaggerConfigOptions = {}): Resolved
     ...(options?.securityDefinitions ?? {}),
   };
   if (options?.bearerAuth) {
+    const bearerConfig = typeof options.bearerAuth === 'object' ? options.bearerAuth : {};
     securitySchemes.bearerAuth = {
       type: 'http',
       scheme: 'bearer',
+      bearerFormat: 'JWT',
+      ...(bearerConfig.description ? { description: bearerConfig.description } : {}),
+    };
+  }
+  if (options?.apiKeyAuth) {
+    const apiConfig =
+      typeof options.apiKeyAuth === 'object'
+        ? options.apiKeyAuth
+        : { name: 'api_key', in: 'header' };
+    securitySchemes.apiKeyAuth = {
+      type: 'apiKey',
+      name: apiConfig.name ?? 'api_key',
+      in: apiConfig.in ?? 'header',
     };
   }
 
-  const globalSecurity: Array<Record<string, string[]>> =
-    options.security ?? (options?.bearerAuth ? [{ bearerAuth: [] }] : []);
+  const globalSecurity: Array<Record<string, string[]>> = options.security ?? [
+    ...(options?.bearerAuth ? [{ bearerAuth: [] }] : []),
+    ...(options?.apiKeyAuth ? [{ apiKeyAuth: [] }] : []),
+  ];
 
   const document: Record<string, any> = {
     openapi: options?.openapi ?? '3.0.3',
@@ -147,7 +173,7 @@ export function buildSwaggerConfig(options: SwaggerConfigOptions = {}): Resolved
       './src/index.js',
       './src/server.js',
       './src/main.js',
-    ];
+    ] as const;
     const entrypoint = commonEntrypoints.find((f) => fs.existsSync(path.resolve(process.cwd(), f)));
     if (entrypoint) {
       routesToScan = [entrypoint];

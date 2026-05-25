@@ -12,6 +12,7 @@ export * from './swagger/swagger-config';
 export * from './swagger/schemas';
 export * from './swagger/routeStore';
 export * from './swagger/decorators';
+export * from './swagger/utils/path-helper';
 
 /**
  * High-level function to set up Swagger in an Express application.

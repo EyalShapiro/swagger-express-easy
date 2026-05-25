@@ -1,4 +1,4 @@
-import { SwaggerRouteStore, createSwaggerRoute, createSwaggerRoutes } from '../../lib/swagger/routeStore';
+import { SwaggerRouteStore, createSwaggerRoute } from '../../lib/swagger/routeStore';
 
 describe('SwaggerRouteStore', () => {
   beforeEach(() => {
@@ -10,7 +10,7 @@ describe('SwaggerRouteStore', () => {
       method: 'get',
       path: '/api/test',
       description: { text: 'Test route' },
-      tags: ['Test']
+      tags: ['Test'],
     });
 
     const routes = SwaggerRouteStore.getRouteList();
@@ -50,7 +50,7 @@ describe('SwaggerRouteStore', () => {
   });
 
   test('createSwaggerRoutes should add multiple routes', () => {
-    createSwaggerRoutes([
+    createSwaggerRoute([
       { method: 'get', path: '/api/multiple1' },
       { method: 'get', path: '/api/multiple2' },
     ]);

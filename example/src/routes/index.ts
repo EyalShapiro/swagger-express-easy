@@ -15,11 +15,12 @@ import fileV1Route from './files-v1';
 import { MathController } from '../controllers/math.controller';
 import { fileUploadsRouter } from './filesUploads';
 import ordersRouter from './orders.routes';
+import demoRouter from './guided-demo';
 import { simulateAsyncError } from '@/utils/heleprAsync';
 
 const router = Router();
 const mathController = new MathController();
-router.use([ordersRouter]);
+router.use([ordersRouter, demoRouter]);
 
 router.use(authMiddleware);
 
@@ -58,6 +59,7 @@ router.use('/message-board', messageBoardRoute);
 router.use('/fuc', funFa);
 router.use('/v1', apiV1Route);
 router.use('/math', mathRoute);
+
 router.get(
   '/example/b',
   (_req, _res, next) => {

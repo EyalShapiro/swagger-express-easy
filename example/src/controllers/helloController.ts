@@ -52,7 +52,7 @@ export function postHello(req: Request, res: Response) {
     res.status(statusCode).json({ message: ERROR_MSG.internal, statusCode, error });
   }
 }
-export function postUser(req: Request, res: Response) {
+export function postUserHi(req: Request, res: Response) {
   const { name, age } = req.body;
 
   // Validation: Ensure both name and age are provided

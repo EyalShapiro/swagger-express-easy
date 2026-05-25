@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getWeatherByCity, updateWeatherReport } from '../controllers/weatherController';
-import { createSwaggerRoutes } from 'swagger-express-easy';
+import { createSwaggerRoute } from 'swagger-express-easy';
 
 const router = Router();
 
@@ -9,7 +9,7 @@ router.get('/:city', getWeatherByCity);
 router.post('/:city', updateWeatherReport);
 
 // Centralized Swagger Documentation using createSwaggerRoutes array
-createSwaggerRoutes([
+createSwaggerRoute([
   {
     method: 'get',
     path: '/api/weather/{city}',

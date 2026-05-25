@@ -65,7 +65,9 @@ export async function generateSwaggerDocs(
       );
     }
 
-    const swaggerDocument = await applyCustomRouteDescriptions(fullPath, basePath);
+    const swaggerDocument = await applyCustomRouteDescriptions(fullPath, basePath, undefined, {
+      caseSensitive: swaggerConfig.caseSensitive,
+    });
 
     // Inject registered schemas
     const schemas = getRegisteredSchemas();
