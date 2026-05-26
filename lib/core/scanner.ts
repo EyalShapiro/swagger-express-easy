@@ -1,5 +1,6 @@
 import type { Express, Router } from 'express';
 import type { ParsedRoute, RouteMeta } from '../types/express';
+import { joinPaths, toString } from '../utils/path';
 
 /**
  * Recursively scans an Express app or router to extract all registered routes.
@@ -12,7 +13,8 @@ import type { ParsedRoute, RouteMeta } from '../types/express';
  */
 export function scanRoutes(appOrRouter: Express | Router | Record<string, unknown>): ParsedRoute[] {
   const routes: ParsedRoute[] = [];
-  const stack = appOrRouter._router?.stack || appOrRouter.stack || [];
+  const stack =
+    (appOrRouter as Express)?._router?.stack || (appOrRouter as Express | Router)?.stack || [];
 
   for (const layer of stack) {
     if (layer.route) {
@@ -31,8 +33,8 @@ export function scanRoutes(appOrRouter: Express | Router | Record<string, unknow
 
       for (const method of methods) {
         routes.push({
-          path: typeof path === 'string' ? path : path.toString(),
-          method: method.toLowerCase(),
+          path: toString(path),
+          method: method?.toLowerCase(),
           middlewares,
           handler,
           meta,
@@ -47,13 +49,14 @@ export function scanRoutes(appOrRouter: Express | Router | Record<string, unknow
       const isCaseSensitive = layer.handle.caseSensitive;
 
       for (const r of nestedRoutes) {
+        const metaRouter: RouteMeta = {
+          ...(r?.meta ?? {}),
+          caseSensitive: isCaseSensitive !== undefined ? isCaseSensitive : r.meta?.caseSensitive,
+        };
         routes.push({
           ...r,
           path: joinPaths(basePath, r.path),
-          meta: {
-            ...r.meta,
-            caseSensitive: isCaseSensitive !== undefined ? isCaseSensitive : r.meta.caseSensitive,
-          },
+          meta: metaRouter,
         });
       }
     }
@@ -69,10 +72,4 @@ function extractPathFromRegexp(source: string): string {
     return '/' + match[1].replace(/\\\//g, '/');
   }
   return '';
-}
-
-function joinPaths(base: string, sub: string): string {
-  const b = base.endsWith('/') ? base.slice(0, -1) : base;
-  const s = sub.startsWith('/') ? sub : `/${sub}`;
-  return b + s;
 }

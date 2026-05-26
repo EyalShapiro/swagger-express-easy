@@ -48,7 +48,7 @@ export class SwaggerRouteStore {
    * @returns {SwaggerRouteDefinition[]} Flat list of stored routes.
    */
   public static getRouteList(): SwaggerRouteDefinition[] {
-    return SwaggerRouteStore.getData().routes;
+    return SwaggerRouteStore.getData().routes ?? [];
   }
 
   /**

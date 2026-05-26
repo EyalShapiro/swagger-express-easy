@@ -56,3 +56,13 @@ export function getAddrFormatToLocal(addr: string): string {
   }
   return addr;
 }
+export function toString<T>(path: T): string {
+  if (typeof path === 'string') return path;
+
+  return path?.toString() ?? '';
+}
+export function joinPaths(base: string, sub: string): string {
+  const b = base.endsWith('/') ? base.slice(0, -1) : base;
+  const s = sub.startsWith('/') ? sub : `/${sub}`;
+  return b + s;
+}

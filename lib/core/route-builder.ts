@@ -21,10 +21,10 @@ export class RouteBuilder {
    * @returns {ParsedRoute[]} Flat list of routes extracted from the app.
    */
   static getRoutes(app: Express, basePath: string): ParsedRoute[] {
-    const cacheKey = basePath || '/';
+    const cacheKey = basePath ?? '/';
 
     if (routeCache.has(cacheKey)) {
-      return routeCache.get(cacheKey)!;
+      return routeCache.get(cacheKey) ?? [];
     }
 
     const routes = scanRoutes(app);

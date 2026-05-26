@@ -5,10 +5,9 @@ import { parseRoutes } from './parser';
 import { scanRoutes } from './scanner';
 import { SwaggerRouteStore } from '../swagger/routeStore';
 import type { Express } from 'express';
-import fs from 'fs';
 import path from 'path';
 import { getCleanBasePath, normalizePath } from '../utils/path';
-import { writeJsonFile } from '../utils/fs-helper';
+import { readJsonFile, writeJsonFile } from '../utils/fs-helper';
 
 /**
  * Generates the final OpenAPI document by:
@@ -36,27 +35,28 @@ export async function generateDocument(
   };
 
   const generator = swaggerAutogenFactory(autogenOptions);
-  const fullPath = path.resolve(process.cwd(), config.outputFile);
+  const fullPath = path.resolve(process.cwd(), config?.outputFile ?? 'swagger.json');
 
-  const endpoints = (config.endpointsRoutes || ['./src/app.ts']).map((f) =>
+  const endpoints = (config?.endpointsRoutes || ['./src/app.ts']).map((f) =>
     path.resolve(process.cwd(), f),
   );
 
   // Run swagger-autogen to get base doc
-  await generator(fullPath, endpoints, config.document as unknown as Record<string, unknown>);
+  await generator(
+    fullPath,
+    endpoints,
+    (config?.document ?? {}) as unknown as Record<string, unknown>,
+  );
 
   // Read generated doc
-  let doc: SwaggerDocument = {};
-  if (fs.existsSync(fullPath)) {
-    doc = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
-  }
+  const doc: SwaggerDocument = readJsonFile<SwaggerDocument>(fullPath) ?? {};
 
   // Scan and parse dynamic routes
   const rawRoutes = scanRoutes(app);
-  const parsed = parseRoutes(rawRoutes, config.caseSensitive);
+  const parsed = parseRoutes(rawRoutes, config?.caseSensitive ?? false);
 
   // Merge parsed dynamic routes into doc
-  if (!doc.paths) doc.paths = {};
+  doc.paths = doc.paths ?? {};
   for (const [p, methods] of Object.entries(parsed.paths)) {
     if (!doc.paths[p]) {
       doc.paths[p] = methods;
@@ -69,7 +69,7 @@ export async function generateDocument(
   // Inject manual routes from SwaggerRouteStore
   const customRoutes = SwaggerRouteStore.getRouteList();
   for (const route of customRoutes) {
-    const rawPath = config.caseSensitive ? route.path : route.path.toLowerCase();
+    const rawPath = config?.caseSensitive ? route?.path : route?.path?.toLowerCase();
     const normalizedPath = getCleanBasePath(normalizePath(rawPath)) || '/';
 
     if (!doc.paths[normalizedPath]) {
@@ -78,29 +78,29 @@ export async function generateDocument(
 
     const pathItem = doc.paths[normalizedPath] as Record<string, unknown>;
     pathItem[route.method] = {
-      ...((pathItem[route.method] as Record<string, unknown>) || {}),
-      summary: route.description?.summary,
-      description: route.description?.text,
-      tags: route.tags || (route.tag ? [route.tag] : undefined),
-      deprecated: route.deprecated,
-      security: route.security,
+      ...(pathItem[route.method] ?? {}),
+      summary: route?.description?.summary,
+      description: route?.description?.text,
+      tags: route?.tags ?? (route?.tag ? [route.tag] : undefined),
+      deprecated: route?.deprecated,
+      security: route?.security,
     };
-    if (route.body) {
+    if (route?.body) {
       (pathItem[route.method] as Record<string, unknown>).requestBody = {
         content: { 'application/json': { schema: route.body } },
       };
     }
-    if (route.responses) {
+    if (route?.responses) {
       const methodObj = pathItem[route.method] as Record<string, unknown>;
       methodObj.responses = Object.assign(methodObj.responses || {}, route.responses);
     }
   }
 
   // Inject security schemes
-  if (config.security) {
-    if (!doc.components) doc.components = {};
+  if (config?.security) {
+    doc.components = doc?.components || {};
     doc.components.securitySchemes = {
-      ...(doc.components.securitySchemes || {}),
+      ...(doc.components?.securitySchemes || {}),
       ...config.security,
     };
   }

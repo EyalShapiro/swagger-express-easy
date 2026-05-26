@@ -38,15 +38,15 @@ export class SwaggerManager {
     document: SwaggerDocument | Record<string, unknown> | undefined;
   }> {
     const config = buildSwaggerConfig(this.options);
-    const swaggerPath = this.options.path || '/api-docs';
+    const swaggerPath = this.options?.path ?? '/api-docs';
 
     try {
       this.swaggerDocument = await generateDocument(this.app, config);
 
-      if (this.options.watch) {
+      if (this.options?.watch) {
         // Basic watch mode: in a real implementation this would hook into fs.watch
         // or a middleware that regenerates on request in non-prod.
-        this.app.use(swaggerPath, async (req, res, next) => {
+        this.app.use(swaggerPath, async (_req, _res, next) => {
           this.swaggerDocument = await generateDocument(this.app, config);
           next();
         });
@@ -56,13 +56,13 @@ export class SwaggerManager {
         swaggerPath,
         customSwaggerMiddleware({
           swaggerDocument: this.swaggerDocument,
-          swaggerUiOptions: this.options.swaggerUiOptions,
+          swaggerUiOptions: this.options?.swaggerUiOptions,
         }),
       );
     } catch (err) {
       console.error('\x1b[31m[swagger-express-easy] Failed to initialize Swagger.\x1b[0m', err);
       // Fallback
-      this.app.use(swaggerPath, (req, res) => {
+      this.app.use(swaggerPath, (_req, res) => {
         res.status(500).json({ error: 'Swagger Initialization Failed' });
       });
     }
@@ -81,7 +81,10 @@ export class SwaggerManager {
  * @example
  * await setupSwagger(app, { path: '/docs', outputFile: './swagger.json' });
  */
-export async function setupSwagger(app: Express, options: SwaggerSetupOptions = {}) {
+export async function setupSwagger(
+  app: Express,
+  options: SwaggerSetupOptions = {},
+): Promise<Express> {
   const manager = new SwaggerManager(app, options);
   await manager.setup();
   return app;

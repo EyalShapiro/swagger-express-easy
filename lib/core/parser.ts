@@ -19,29 +19,29 @@ export interface ParseResult {
 export function parseRoutes(routes: ParsedRoute[], isGlobalCaseSensitive = false): ParseResult {
   const paths: Record<string, SwaggerPathItem> = {};
 
-  for (const route of routes) {
+  for (const route of routes ?? []) {
     // Determine case sensitivity
     const isRouteCaseSensitive =
-      route.meta.caseSensitive !== undefined ? route.meta.caseSensitive : isGlobalCaseSensitive;
+      route?.meta?.caseSensitive !== undefined ? route.meta.caseSensitive : isGlobalCaseSensitive;
 
-    const rawPath = isRouteCaseSensitive ? route.path : route.path.toLowerCase();
-    const openApiPath = normalizePath(rawPath);
+    const rawPath = isRouteCaseSensitive ? route?.path : route?.path?.toLowerCase();
+    const openApiPath = normalizePath(rawPath ?? '');
 
     if (!paths[openApiPath]) {
       paths[openApiPath] = {};
     }
 
     const pathItem = paths[openApiPath] as Record<string, SwaggerOperation>;
-    if (!pathItem[route.method]) {
-      pathItem[route.method] = {
+    if (!pathItem[route?.method]) {
+      pathItem[route?.method] = {
         responses: { 200: { description: 'OK' } },
       } as SwaggerOperation;
     }
 
-    const op = pathItem[route.method] as SwaggerOperation;
+    const op = pathItem[route?.method] as SwaggerOperation;
 
     // Parse Multer
-    const multerMetadata = parseMulterMiddlewares(route.middlewares);
+    const multerMetadata = parseMulterMiddlewares(route?.middlewares ?? []);
     if (multerMetadata) {
       op.requestBody = {
         content: {
@@ -59,8 +59,8 @@ export function parseRoutes(routes: ParsedRoute[], isGlobalCaseSensitive = false
 function parseMulterMiddlewares(middlewares: ((...args: unknown[]) => unknown)[]) {
   let hasMulter = false;
 
-  for (const mw of middlewares) {
-    if (mw.name === 'multerMiddleware') {
+  for (const mw of middlewares ?? []) {
+    if (mw?.name === 'multerMiddleware') {
       hasMulter = true;
       // In a real implementation we would extract field names using reflection or AST,
       // but Multer dynamically attaches itself.

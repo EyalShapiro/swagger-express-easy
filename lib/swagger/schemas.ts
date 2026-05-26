@@ -1,7 +1,14 @@
 /**
  * Supported OpenAPI data types for schema properties.
  */
-export type SchemaPropertyType = 'string' | 'integer' | 'number' | 'boolean' | 'array' | 'object';
+export type SchemaPropertyType =
+  | 'string'
+  | 'integer'
+  | 'number'
+  | 'boolean'
+  | 'array'
+  | 'object'
+  | 'null';
 
 /**
  * Definition of a single property inside an OpenAPI schema.
@@ -109,9 +116,9 @@ export class SchemaManager {
     const cleanProps: Record<string, Omit<SchemaPropertyDef, 'required'>> = {};
     const example: Record<string, unknown> = {};
 
-    for (const [key, def] of Object.entries(properties)) {
-      if (def.required) requiredFields.push(key);
-      if (def.example !== undefined) example[key] = def.example;
+    for (const [key, def] of Object.entries(properties ?? {})) {
+      if (def?.required) requiredFields.push(key);
+      if (def?.example !== undefined) example[key] = def.example;
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { required: _req, ...rest } = def;
@@ -215,22 +222,9 @@ export function defineEntityFromExample<T extends object>(
 ): OpenAPISchema {
   const properties: Record<string, SchemaPropertyDef> = {};
 
-  for (const [key, value] of Object.entries(example)) {
-    const jsType = typeof value;
-    let swaggerType: SchemaPropertyType = 'string';
-
-    if (jsType === 'number') {
-      swaggerType = Number.isInteger(value) ? 'integer' : 'number';
-    } else if (jsType === 'boolean') {
-      swaggerType = 'boolean';
-    } else if (Array.isArray(value)) {
-      swaggerType = 'array';
-    } else if (value !== null && jsType === 'object') {
-      swaggerType = 'object';
-    }
-
+  for (const [key, value] of Object.entries(example ?? {})) {
     properties[key] = {
-      type: swaggerType,
+      type: inferSwaggerType(value),
       example: value,
       required: true,
     };
@@ -265,6 +259,20 @@ export const getRegisteredSchemas = () => manager.getSchemas();
  */
 export const clearSchemas = () => manager.clear();
 
+function inferSwaggerType<T = unknown>(value: T): SchemaPropertyType {
+  const jsType = typeof value;
+  if (value === null) {
+    return 'null';
+  }
+
+  if (jsType === 'number') return Number.isInteger(value) ? 'integer' : 'number';
+  if (jsType === 'boolean') return 'boolean';
+  if (Array.isArray(value)) return 'array';
+  if (value !== null && jsType === 'object') return 'object';
+
+  return 'string';
+}
+
 /**
  * Helper to wrap properties as required by default.
  * Useful for defining response bodies based on entity properties.
@@ -276,7 +284,7 @@ export function defineResponseProperties(
   properties: Record<string, SchemaPropertyDef>,
 ): Record<string, SchemaPropertyDef> {
   const result: Record<string, SchemaPropertyDef> = {};
-  for (const [key, def] of Object.entries(properties)) {
+  for (const [key, def] of Object.entries(properties ?? {})) {
     result[key] = { required: true, ...def };
   }
   return result;

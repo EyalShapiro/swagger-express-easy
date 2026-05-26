@@ -1,5 +1,7 @@
 # Source TypeScript (consumers get dist/ only)
-src/
+lib/
+tests/
+example/
 
 # Example app artifacts
 tools/
