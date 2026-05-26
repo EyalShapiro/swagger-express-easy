@@ -1,6 +1,6 @@
 import { applyCustomRouteDescriptions } from '../../lib/swagger/utils/sorted-data';
 import { SwaggerRouteStore } from '../../lib/swagger/routeStore';
-import * as fsHelper from '../../lib/swagger/utils/fs-helper';
+import * as fsHelper from '../../lib/utils/fs-helper';
 
 jest.mock('../../lib/swagger/utils/fs-helper', () => ({
   readSwaggerFile: jest.fn(),

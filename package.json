@@ -41,43 +41,24 @@
     "prepublishOnly": "npm run build",
     "dev:examples": "npm run dev --prefix example",
     "dev": "npm run dev:examples",
-    "lint": "eslint example/src lib --fix",
-    "format": "prettier --write example/src lib",
-    "format:check": "prettier --check example/src lib"
+    "lint": "eslint lib --fix"
   },
   "peerDependencies": {
-    "express": ">=4.0.0",
-    "swagger-autogen": ">=2.23.0",
-    "swagger-ui-express": ">=4.0.0"
+    "express": ">=4.0.0"
   },
-  "peerDependenciesMeta": {
-    "express": {
-      "optional": true
-    },
-    "swagger-ui-express": {
-      "optional": true
-    }
-  },
-
   "dependencies": {
-    "swagger-autogen": ">=2.23.0",
-    "swagger-ui-express": ">=4.0.0"
+    "swagger-autogen": "^2.23.7",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
-    "@types/jest": "^30.0.0",
-    "@types/node": "^24.5.2",
-    "@types/swagger-ui-express": "^4.1.8",
-    "@typescript-eslint/eslint-plugin": "^8.44.0",
-    "@typescript-eslint/parser": "^8.44.0",
-    "eslint": "^9.35.0",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.4",
-    "jest": "^30.3.0",
-    "prettier": "^3.6.2",
-    "ts-jest": "^29.4.9",
-    "ts-node": "^10.9.2",
-    "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.9.2",
-    "typescript-eslint": "^8.47.0"
+    "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.10.1",
+    "@types/swagger-ui-express": "^4.1.7",
+    "eslint": "^8.0.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
   }
 }

@@ -1,41 +1,47 @@
-import { Express } from 'express';
-import { SwaggerAuto, SwaggerSetupOptions } from './swagger';
-import { defineSchema, schemaRef } from './swagger/schemas';
-import { createSwaggerRoute } from './swagger/routeStore';
+import { SwaggerManager, setupSwagger } from './swagger/setup-swagger';
+import { customSwaggerMiddleware } from './swagger/middleware';
+import { defineSchema, defineEntity, defineEntityFromExample, schemaRef } from './swagger/schemas';
 import { withSwagger, SwaggerRoute } from './swagger/decorators';
-
-/**
- * Re-export core classes and types.
- */
-export * from './swagger';
-export * from './swagger/swagger-config';
-export * from './swagger/schemas';
-export * from './swagger/routeStore';
-export * from './swagger/decorators';
-export * from './swagger/utils/path-helper';
+import { createSwaggerRoute } from './swagger/routeStore';
 
 /**
  * High-level function to set up Swagger in an Express application.
  *
- * @param app - The Express application instance.
+ * @param app - Express app instance.
  * @param options - Configuration options for Swagger.
+ * @returns A promise that resolves when Swagger is fully set up.
+ *
+ * @example
+ * setupSwagger(app, {
+ *   path: '/docs',
+ *   basePath: 'api/v1'
+ * });
  */
-export async function setupSwagger(app: Express, options: SwaggerSetupOptions = {}) {
-  const swagger = new SwaggerAuto(app, options);
-  return swagger.setup();
-}
+export { setupSwagger };
 
 /**
- * Export a default object for convenience.
+ * Custom middleware to serve Swagger UI without requiring a specific route structure.
+ *
+ * @param options - Configuration for the middleware including the document.
+ * @returns Array of Express RequestHandlers.
  */
+export { customSwaggerMiddleware };
+
+export { SwaggerManager };
+export { defineSchema, defineEntity, defineEntityFromExample, schemaRef };
+export { withSwagger, SwaggerRoute, createSwaggerRoute };
+
 export const SwaggerExpressEasy = {
-  SwaggerAuto,
+  SwaggerManager,
   setupSwagger,
+  customSwaggerMiddleware,
   defineSchema,
+  defineEntity,
+  defineEntityFromExample,
   schemaRef,
-  createSwaggerRoute,
   withSwagger,
   SwaggerRoute,
+  createSwaggerRoute,
 };
 
 export default SwaggerExpressEasy;

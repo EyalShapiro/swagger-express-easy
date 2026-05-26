@@ -1,8 +1,8 @@
 import dotenv from 'dotenv';
-import { setupSwagger, SwaggerAuto } from '../../dist';
 import app from './app';
 import app2 from './app2';
 import { HOST, PORT } from './config';
+import { setupSwagger, SwaggerAuto } from 'swagger-express-easy';
 
 dotenv.config({ path: ['.env.local'], debug: false, quiet: false });
 // Initialize Swagger instances
@@ -25,9 +25,12 @@ async function startServer() {
   try {
     await swagger.setup();
 
+    // Mount Swagger UI middleware
+    app.use('/api-docs', swagger.middleware());
+    app.use('/api-docs/', swagger.middleware());
     // Demonstrate mounting custom Swagger middleware on another route manually
     app.use('/api-docs-custom', swagger.middleware());
-
+    app.use('/api-docs-custom/', swagger.middleware());
     await setupSwagger(app2, {
       path: '/api-docs2',
       watch: false,
@@ -54,30 +57,4 @@ async function startServer() {
     process.exit(1);
   }
 }
-
-process.on('SIGTERM', () => {
-  console.debug('SIGTERM signal received: closing HTTP server');
-  swagger.getApp().on('close', () => {
-    console.debug('HTTP server 1 closed');
-    process.exit(0);
-  });
-  swagger.getApp().on('error', () => {
-    console.debug('HTTP error');
-    process.exit(1);
-  });
-  process.exit(1);
-});
 startServer();
-
-process.on('SIGTERM', () => {
-  console.debug('SIGTERM signal received: closing HTTP server');
-  swagger.getApp().on('close', () => {
-    console.debug('HTTP server 1 closed');
-    process.exit(0);
-  });
-  swagger.getApp().on('error', () => {
-    console.debug('HTTP error');
-    process.exit(1);
-  });
-  process.exit(1);
-});

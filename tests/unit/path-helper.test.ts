@@ -1,4 +1,4 @@
-import { normalizePath } from '../../lib/swagger/utils/path-helper';
+import { normalizePath } from 'swagger-express-easy/utils/path';
 
 describe('normalizePath', () => {
   test('should add leading slash if missing', () => {

@@ -1,0 +1,37 @@
+import type { Request, Response, NextFunction, RequestHandler } from 'express';
+import swaggerUi from 'swagger-ui-express';
+import type { SwaggerDocument } from '../types/swagger';
+
+export interface CustomSwaggerMiddlewareOptions {
+  swaggerDocument: SwaggerDocument;
+  swaggerUiOptions?: swaggerUi.SwaggerUiOptions;
+  darkMode?: boolean;
+}
+
+/**
+ * Creates an Express middleware array for Swagger UI.
+ * Supports optional dark mode via CSS filter inversion.
+ *
+ * @param {CustomSwaggerMiddlewareOptions} options - Swagger document, UI options, and dark mode flag.
+ * @returns {RequestHandler[]} Array of Express middleware handlers that serve the Swagger UI.
+ * @example
+ * app.use('/docs', customSwaggerMiddleware({ swaggerDocument: doc, darkMode: true }));
+ */
+export function customSwaggerMiddleware(options: CustomSwaggerMiddlewareOptions): RequestHandler[] {
+  const uiOptions = { ...options.swaggerUiOptions };
+
+  if (options.darkMode) {
+    uiOptions.customCss =
+      (uiOptions.customCss || '') +
+      '\n.swagger-ui { filter: invert(88%) hue-rotate(180deg); }\n.swagger-ui .microlight { filter: invert(100%) hue-rotate(180deg); }';
+  }
+
+  return [
+    ...swaggerUi.serve,
+    (req: Request, res: Response, next: NextFunction) => {
+      if (res.headersSent) return;
+      const setupMw = swaggerUi.setup(options.swaggerDocument, uiOptions);
+      return setupMw(req, res, next);
+    },
+  ];
+}

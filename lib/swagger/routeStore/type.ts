@@ -39,7 +39,7 @@ export type SwaggerRouteDefinition = {
   method: HTTPMethod;
   path: string;
   description?: { text?: string; summary?: string };
-  body?: ({ default?: JsonObject } & JsonObject) | any;
+  body?: ({ default?: JsonObject } & JsonObject) | unknown;
   parameters?: Array<ParametersType & JsonObject>;
   /** Media types the API can consume (e.g. ['multipart/form-data']) */
   consumes?: string[];
@@ -52,7 +52,7 @@ export type SwaggerRouteDefinition = {
   /** Expected HTTP responses (status code mapping) */
   responses?: Record<
     number | string,
-    { description?: string; schema?: any | SchemaType } & JsonObject
+    { description?: string; schema?: unknown | SchemaType } & JsonObject
   >;
   /** Mark this route as deprecated in OpenAPI spec */
   deprecated?: boolean;

@@ -37,7 +37,7 @@ export interface SchemaPropertyDef<T = unknown> {
   /**
    * For type: 'array' — defines the schema of the items within the array.
    */
-  items?: { type: SchemaPropertyType } & Record<string, any>;
+  items?: { type: SchemaPropertyType } & Record<string, unknown>;
 
   /**
    * For type: 'object' — defines the nested properties of the object.
@@ -47,12 +47,12 @@ export interface SchemaPropertyDef<T = unknown> {
   /**
    * Possible enum values for the property.
    */
-  enum?: any[];
+  enum?: unknown[];
 
   /**
    * The default value for the property.
    */
-  default?: any;
+  default?: unknown;
 }
 
 /**
@@ -63,7 +63,7 @@ export interface OpenAPISchema {
   required?: string[];
   properties: Record<string, Omit<SchemaPropertyDef, 'required'>>;
   description?: string;
-  example?: Record<string, any>;
+  example?: Record<string, unknown>;
 }
 
 /**
@@ -165,6 +165,11 @@ const manager = SchemaManager.getInstance();
 /**
  * Defines a new reusable schema (Entity).
  * Registered schemas automatically appear in the Swagger UI under "Schemas".
+ *
+ * @param {string} name - Schema name.
+ * @param {Record<string, SchemaPropertyDef>} properties - Property definitions.
+ * @param {string} [description] - Optional description.
+ * @returns {OpenAPISchema} The registered schema object.
  */
 export const defineSchema = (
   name: string,
@@ -235,9 +240,11 @@ export function defineEntityFromExample<T extends object>(
 }
 
 /**
- * Generates a reference to a registered schema.
+ * Generates a `$ref` string for a registered schema.
  * Use this in route definitions for request bodies or responses.
  *
+ * @param {string} name - Schema name to reference.
+ * @returns {string} OpenAPI `$ref` string (e.g. `'#/components/schemas/User'`).
  * @example
  * createSwaggerRoute({
  *   path: '/users',
@@ -248,17 +255,22 @@ export const schemaRef = (name: string) => SchemaManager.ref(name);
 
 /**
  * Gets all registered schemas. Internal use only.
+ * @returns {Record<string, OpenAPISchema>} Map of schema names to their objects.
  */
 export const getRegisteredSchemas = () => manager.getSchemas();
 
 /**
  * Clears the schema registry.
+ * @returns {void}
  */
 export const clearSchemas = () => manager.clear();
 
 /**
  * Helper to wrap properties as required by default.
  * Useful for defining response bodies based on entity properties.
+ *
+ * @param {Record<string, SchemaPropertyDef>} properties - Property definitions.
+ * @returns {Record<string, SchemaPropertyDef>} Same map with `required: true` on every property.
  */
 export function defineResponseProperties(
   properties: Record<string, SchemaPropertyDef>,
