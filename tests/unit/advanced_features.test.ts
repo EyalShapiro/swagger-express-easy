@@ -41,4 +41,29 @@ describe('Advanced Swagger Features', () => {
     const routes = SwaggerRouteStore.getRouteList();
     expect(routes[0].path).toBe('/api/explicit');
   });
+
+  test('withSwagger should register params and query helpers correctly', () => {
+    const handler = (req: Request, res: Response) => res.json({ ok: true });
+
+    withSwagger(
+      {
+        method: 'get',
+        path: '/api/user/:id',
+        params: {
+          id: 'The user ID',
+        },
+        query: {
+          role: { type: 'string', required: false, description: 'Role filter' },
+        },
+      },
+      handler,
+    );
+
+    const routes = SwaggerRouteStore.getRouteList();
+    expect(routes).toHaveLength(1);
+    expect(routes[0].params).toEqual({ id: 'The user ID' });
+    expect(routes[0].query).toEqual({
+      role: { type: 'string', required: false, description: 'Role filter' },
+    });
+  });
 });

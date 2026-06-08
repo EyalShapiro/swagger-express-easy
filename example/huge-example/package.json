@@ -14,7 +14,7 @@
     "express": ">=4.0.0",
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
-    "swagger-express-easy": "file:.."
+    "swagger-express-easy": "file:../.."
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

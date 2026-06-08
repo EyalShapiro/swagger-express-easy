@@ -25,9 +25,8 @@ export function scanRoutes(appOrRouter: Express | Router | Record<string, unknow
       const handlers = layer.route.stack.map(
         (s: Record<string, unknown>) => s.handle as (...args: unknown[]) => unknown,
       );
-      const handler = handlers[handlers.length - 1];
-      const middlewares = handlers.slice(0, handlers.length - 1);
-
+      const handler = handlers.at(-1);
+      const middlewares = handlers.slice(0, -1);
       // Determine case sensitivity from the router that owns it if possible
       const meta: RouteMeta = {};
 

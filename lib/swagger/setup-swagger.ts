@@ -1,4 +1,4 @@
-import type { Express } from 'express';
+import { type Express } from 'express';
 import type { SwaggerSetupOptions } from '../types/internal';
 import { generateDocument } from '../core/generator';
 import { buildSwaggerConfig } from './helpers';
@@ -52,13 +52,11 @@ export class SwaggerManager {
         });
       }
 
-      this.app.use(
-        swaggerPath,
-        customSwaggerMiddleware({
-          swaggerDocument: this.swaggerDocument,
-          swaggerUiOptions: this.options?.swaggerUiOptions,
-        }),
-      );
+      const optionsMiddleware = {
+        swaggerDocument: this.swaggerDocument,
+        swaggerUiOptions: this.options?.swaggerUiOptions,
+      };
+      this.app.use(swaggerPath, customSwaggerMiddleware(optionsMiddleware));
     } catch (err) {
       console.error('\x1b[31m[swagger-express-easy] Failed to initialize Swagger.\x1b[0m', err);
       // Fallback

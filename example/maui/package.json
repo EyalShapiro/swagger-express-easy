@@ -1,16 +1,16 @@
 {
-  "name": "multer-upload-example",
+  "name": "maui-example",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "ts-node index.ts"
   },
   "dependencies": {
-    "express": "^3.18.2",
+    "express": "^5.2.1",
     "swagger-express-easy": "file:../../"
   },
   "devDependencies": {
-    "@types/express": "^3.17.21",
+    "@types/express": "^4.17.21",
     "ts-node": "^10.9.2",
     "typescript": "^5.0.0"
   }

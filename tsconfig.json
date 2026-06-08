@@ -25,6 +25,7 @@
     }
   },
   "include": ["lib/**/*.ts", "tests/**/*.ts"],
+  "exclude": ["example/**/*"],
   "ts-node": {
     "compilerOptions": {
       "module": "commonjs"

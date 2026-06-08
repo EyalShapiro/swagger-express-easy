@@ -4,11 +4,30 @@ import type { SwaggerDocument } from '../types/swagger';
 import { parseRoutes } from './parser';
 import { scanRoutes } from './scanner';
 import { SwaggerRouteStore } from '../swagger/routeStore';
-import type { Express } from 'express';
+import type { Express, Request } from 'express';
 import path from 'path';
+import fs from 'fs';
 import { getCleanBasePath, normalizePath } from '../utils/path';
 import { readJsonFile, writeJsonFile } from '../utils/fs-helper';
 
+const warnedFiles = new Set<string>();
+
+const DEFAULT_SWAGGER_ROUTE_FILES = [
+  './src/app.ts',
+  './src/app.js',
+
+  './src/**/*.router.ts',
+  './src/**/*.router.js',
+
+  './src/**/*router.ts',
+  './src/**/*router.js',
+
+  './src/**/*routes.ts',
+  './src/**/*routes.js',
+
+  './src/routers/**/*.ts',
+  './src/routers/**/*.js',
+];
 /**
  * Generates the final OpenAPI document by:
  * 1. Running `swagger-autogen` for comment-based annotations.
@@ -37,10 +56,28 @@ export async function generateDocument(
   const generator = swaggerAutogenFactory(autogenOptions);
   const fullPath = path.resolve(process.cwd(), config?.outputFile ?? 'swagger.json');
 
-  const endpoints = (config?.endpointsRoutes || ['./src/app.ts']).map((f) =>
-    path.resolve(process.cwd(), f),
-  );
+  const rawEndpoints = config?.endpointsRoutes || DEFAULT_SWAGGER_ROUTE_FILES;
+  const endpoints: string[] = [];
 
+  for (const filePattern of rawEndpoints) {
+    const resolvedPath = path.resolve(process.cwd(), filePattern);
+    const isGlob = /[*?{}[\]]/.test(filePattern);
+
+    if (isGlob) {
+      endpoints.push(resolvedPath);
+    } else {
+      if (fs.existsSync(resolvedPath)) {
+        endpoints.push(resolvedPath);
+      } else {
+        if (!warnedFiles.has(resolvedPath)) {
+          warnedFiles.add(resolvedPath);
+          console.warn(
+            `\x1b[33m[swagger-express-easy] Warning: Route file/configuration not found at "${resolvedPath}". Ignoring.\x1b[0m`,
+          );
+        }
+      }
+    }
+  }
   // Run swagger-autogen to get base doc
   await generator(
     fullPath,
@@ -49,7 +86,11 @@ export async function generateDocument(
   );
 
   // Read generated doc
-  const doc: SwaggerDocument = readJsonFile<SwaggerDocument>(fullPath) ?? {};
+  let doc: SwaggerDocument = readJsonFile<SwaggerDocument>(fullPath) ?? {};
+  // Ensure OpenAPI version field exists
+  if (!doc.openapi) {
+    doc.openapi = '3.0.0';
+  }
 
   // Scan and parse dynamic routes
   const rawRoutes = scanRoutes(app);
@@ -85,6 +126,59 @@ export async function generateDocument(
       deprecated: route?.deprecated,
       security: route?.security,
     };
+
+    // Merge and inject parameters
+    const existingParams = (pathItem[route.method] as Record<string, unknown>)?.parameters;
+    const parameters: any[] = [];
+
+    if (Array.isArray(existingParams)) parameters.push(...existingParams);
+
+    const upsertParameter = (param: any) => {
+      const idx = parameters.findIndex((p) => p.name === param.name && p.in === param.in);
+      if (idx !== -1) {
+        parameters[idx] = { ...parameters[idx], ...param };
+      } else {
+        parameters.push(param);
+      }
+    };
+
+    if (route.parameters) route.parameters.forEach((p) => upsertParameter(p));
+
+    const addParams = (source: keyof Request, sourceData?: Record<string, any>) => {
+      if (!sourceData) return;
+      for (const [name, val] of Object.entries(sourceData)) {
+        const item: Record<string, any> = {
+          name,
+          in: source,
+          required: source === 'path' ? true : false,
+          schema: { type: 'string' },
+        };
+        if (typeof val === 'string') {
+          item.description = val;
+        } else if (val && typeof val === 'object') {
+          if (val.type) item.schema.type = val.type;
+          if (val.required !== undefined) item.required = val.required;
+          if (val.description) item.description = val.description;
+          if (val.schema) {
+            item.schema = { ...item.schema, ...val.schema };
+          }
+        }
+        upsertParameter(item);
+      }
+    };
+    for (const [location, params] of [
+      ['path', route.params],
+      ['query', route.query],
+      ['header', route.headers],
+      ['cookies', route.cookies],
+    ] as const) {
+      addParams(location, params);
+    }
+    if (parameters.length > 0) {
+      const methodObj = pathItem[route.method] as Record<string, unknown>;
+      methodObj.parameters = Object.assign(methodObj.parameters || {}, parameters);
+    }
+
     if (route?.body) {
       (pathItem[route.method] as Record<string, unknown>).requestBody = {
         content: { 'application/json': { schema: route.body } },
@@ -99,6 +193,7 @@ export async function generateDocument(
   // Inject security schemes
   if (config?.security) {
     doc.components = doc?.components || {};
+
     doc.components.securitySchemes = {
       ...(doc.components?.securitySchemes || {}),
       ...config.security,

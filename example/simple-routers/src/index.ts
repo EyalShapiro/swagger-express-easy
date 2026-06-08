@@ -1,13 +1,19 @@
+import { createServer } from 'http';
 import express from 'express';
 import { setupSwagger } from 'swagger-express-easy';
+
 import { router } from './routes';
 
 const app = express();
-app.use(express.json());
+
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
 app.use('/api', router);
 
-setupSwagger(app as any, {
+setupSwagger(app, {
+  watch: true,
+
   document: {
     info: {
       title: 'Simple Routers Example',
@@ -15,11 +21,12 @@ setupSwagger(app as any, {
       description: 'A tiny example combining @SwaggerRoute and withSwagger',
     },
   },
-  endpointsRoutes: ['./src/index.ts'],
+  endpointsRoutes: ['./src/index.ts', 'routes/index.ts'],
   outputFile: './swagger-output.json',
 });
-
-app.listen(3000, () => {
-  console.log('Server is running on http://localhost:3000');
-  console.log('Swagger UI is available at http://localhost:3000/api-docs');
+const PORT = 3002;
+const url = `http://localhost:${PORT}`;
+createServer(app).listen(PORT, () => {
+  console.info(`Server is running on ${url}`);
+  console.info(`Swagger UI is available at ${url}/api-docs`);
 });

@@ -60,4 +60,24 @@ export type SwaggerRouteDefinition = {
   caseSensitive?: boolean;
   /** Security requirements for this specific route */
   security?: Array<Record<string, string[]>>;
+  /** Path parameters definition helper */
+  params?: Record<
+    string,
+    { type?: string; required?: boolean; description?: string; schema?: SchemaType } | string
+  >;
+  /** Query parameters definition helper */
+  query?: Record<
+    string,
+    { type?: string; required?: boolean; description?: string; schema?: SchemaType } | string
+  >;
+  /** Headers definition helper */
+  headers?: Record<
+    string,
+    { type?: string; required?: boolean; description?: string; schema?: SchemaType } | string
+  >;
+  /** Cookies definition helper */
+  cookies?: Record<
+    string,
+    { type?: string; required?: boolean; description?: string; schema?: SchemaType } | string
+  >;
 };
