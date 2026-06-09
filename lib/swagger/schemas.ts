@@ -262,7 +262,7 @@ export const clearSchemas = () => manager.clear();
 function inferSwaggerType<T = unknown>(value: T): SchemaPropertyType {
   const jsType = typeof value;
   if (value === null) {
-    return 'null';
+    return 'string';
   }
 
   if (jsType === 'number') return Number.isInteger(value) ? 'integer' : 'number';

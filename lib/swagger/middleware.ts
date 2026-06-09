@@ -30,7 +30,24 @@ export function customSwaggerMiddleware(options: CustomSwaggerMiddlewareOptions)
     ...swaggerUi.serve,
     (req: Request, res: Response, next: NextFunction) => {
       if (res.headersSent) return;
-      const setupMw = swaggerUi.setup(options.swaggerDocument, uiOptions);
+
+      const doc = options.swaggerDocument
+        ? JSON.parse(JSON.stringify(options.swaggerDocument))
+        : {};
+
+      const protocol = req.protocol;
+      const host = req.get('host') || 'localhost';
+      const requestUrl = `${protocol}://${host}/`;
+
+      if (
+        !doc.servers ||
+        doc.servers.length === 0 ||
+        (doc.servers.length === 1 && doc.servers[0].url === 'http://localhost:3000/')
+      ) {
+        doc.servers = [{ url: requestUrl }];
+      }
+
+      const setupMw = swaggerUi.setup(doc, uiOptions);
       return setupMw(req, res, next);
     },
   ];

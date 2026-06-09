@@ -2,6 +2,16 @@ import fs from 'fs';
 import path from 'path';
 
 /**
+ * Checks if a file or directory exists.
+ *
+ * @param {string} filePath - Absolute path to check.
+ * @returns {boolean} True if it exists, false otherwise.
+ */
+export function fileExists(filePath: string): boolean {
+  return fs.existsSync(filePath);
+}
+
+/**
  * Ensures that the directory for the given file path exists.
  * Creates it recursively if missing.
  *

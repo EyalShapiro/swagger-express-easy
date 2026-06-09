@@ -43,19 +43,21 @@ export class SwaggerManager {
     try {
       this.swaggerDocument = await generateDocument(this.app, config);
 
+      const optionsMiddleware = {
+        swaggerDocument: this.swaggerDocument,
+        swaggerUiOptions: this.options?.swaggerUiOptions,
+      };
+
       if (this.options?.watch) {
         // Basic watch mode: in a real implementation this would hook into fs.watch
         // or a middleware that regenerates on request in non-prod.
         this.app.use(swaggerPath, async (_req, _res, next) => {
           this.swaggerDocument = await generateDocument(this.app, config);
+          optionsMiddleware.swaggerDocument = this.swaggerDocument;
           next();
         });
       }
 
-      const optionsMiddleware = {
-        swaggerDocument: this.swaggerDocument,
-        swaggerUiOptions: this.options?.swaggerUiOptions,
-      };
       this.app.use(swaggerPath, customSwaggerMiddleware(optionsMiddleware));
     } catch (err) {
       console.error('\x1b[31m[swagger-express-easy] Failed to initialize Swagger.\x1b[0m', err);
