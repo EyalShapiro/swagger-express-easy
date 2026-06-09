@@ -1,0 +1,19 @@
+{
+  "name": "simple-routers-example",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "ts-node src/index.ts",
+    "start": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "express": ">=4.0.0",
+    "swagger-express-easy": "file:../.."
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.0"
+  }
+}
