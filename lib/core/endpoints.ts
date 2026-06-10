@@ -1,6 +1,6 @@
 import path from 'path';
 import { fileExists } from '../utils/fs-helper';
-import { logWarning, logErrorWithSuggestion } from '../utils/logger';
+import { logErrorWithSuggestion } from '../utils/logger';
 
 const warnedFiles = new Set<string>();
 

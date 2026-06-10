@@ -41,7 +41,7 @@ describe('Schema Helpers (Entity by Type)', () => {
     expect(schemas.Product.properties.price.type).toBe('number');
     expect(schemas.Product.properties.inStock.type).toBe('boolean');
     expect(schemas.Product.properties.tags.type).toBe('array');
-    
+
     // Check examples are preserved
     expect(schemas.Product.properties.title.example).toBe('Smartphone');
   });
@@ -49,7 +49,7 @@ describe('Schema Helpers (Entity by Type)', () => {
   test('defineEntityFromExample should handle null or nested objects gracefully', () => {
     const complexObj = {
       metadata: { version: 1 },
-      optional: null
+      optional: null,
     };
 
     defineEntityFromExample('Complex', complexObj as any);
