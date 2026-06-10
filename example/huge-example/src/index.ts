@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import app from './app';
 import app2 from './app2';
 import { HOST, PORT } from './config';
-import { setupSwagger, SwaggerAuto } from 'swagger-express-easy';
+import { customSwaggerMiddleware, setupSwagger, SwaggerAuto } from 'swagger-express-easy';
 
 dotenv.config({ path: ['.env.local'], debug: false, quiet: false });
 // Initialize Swagger instances
@@ -25,12 +25,9 @@ async function startServer() {
   try {
     await swagger.setup();
 
-    // Mount Swagger UI middleware
-    app.use('/api-docs', swagger.middleware());
-    app.use('/api-docs/', swagger.middleware());
     // Demonstrate mounting custom Swagger middleware on another route manually
-    app.use('/api-docs-custom', swagger.middleware());
-    app.use('/api-docs-custom/', swagger.middleware());
+    app.use('/api-docs-custom', customSwaggerMiddleware);
+    app.use('/api-docs-custom/', customSwaggerMiddleware);
     await setupSwagger(app2, {
       path: '/api-docs2',
       watch: false,
@@ -47,7 +44,7 @@ async function startServer() {
       },
     });
 
-    swagger.listen(PORT, () => {
+    app.listen(PORT, () => {
       console.info(`\n\x1b[32m[Main] Server running on http://${HOST}\x1b[0m`);
       console.info(`\x1b[32m[Main] Swagger UI at http://${HOST}/api-docs\x1b[0m`);
       console.info(`\x1b[32m[Main] Custom Swagger UI at http://${HOST}/api-docs-custom\x1b[0m`);

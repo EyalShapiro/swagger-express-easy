@@ -1,0 +1,14 @@
+{
+  "name": "commonjs-example",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "express": "^4.12.2",
+    "swagger-express-easy": "file:../../"
+  },
+  "devDependencies": {}
+}

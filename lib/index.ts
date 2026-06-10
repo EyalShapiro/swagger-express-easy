@@ -27,12 +27,14 @@ export { setupSwagger };
  */
 export { customSwaggerMiddleware };
 
-export { SwaggerManager };
+export { SwaggerManager, SwaggerManager as SwaggerAuto, SwaggerManager as Swagger };
 export { defineSchema, defineEntity, defineEntityFromExample, schemaRef };
 export { withSwagger, SwaggerRoute, createSwaggerRoute };
 
 export const SwaggerExpressEasy = {
   SwaggerManager,
+  SwaggerAuto: SwaggerManager,
+  Swagger: SwaggerManager,
   setupSwagger,
   customSwaggerMiddleware,
   defineSchema,

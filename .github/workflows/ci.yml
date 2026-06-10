@@ -4,15 +4,20 @@ on:
     branches: ['main', 'master']
   pull_request:
     branches: ['main', 'master']
+    types: [opened, synchronize, reopened, closed]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    # Skip when a PR is closed — tests already ran when the PR was open
+    if: github.event.action != 'closed'
     strategy:
       matrix:
         node-version: [16.x, 18.x, 20.x, 22.x]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -22,3 +27,91 @@ jobs:
       - run: npm run format
       - run: npm test
       - run: npm run build
+
+  bump-version:
+    name: Bump version (Conventional Commits)
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    permissions:
+      contents: write
+    # Run when:
+    #   - Direct push to main (not a PR merge commit, to avoid double-run with regular merges)
+    #   - A PR is merged into main (uses PR title for bump type detection)
+    if: |
+      always() &&
+      (
+        (
+          github.event_name == 'push' &&
+          needs.build-and-test.result == 'success' &&
+          !startsWith(github.event.head_commit.message, 'Merge pull request #')
+        ) ||
+        (
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.merged == true
+        )
+      )
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Determine version bump from commit/PR title
+        id: bump
+        run: |
+          # For PR merges → use PR title; for direct pushes → use commit message
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            COMMIT_MSG="${{ github.event.pull_request.title }}"
+          else
+            COMMIT_MSG=$(git log -1 --pretty=%B)
+          fi
+          echo "Source message: $COMMIT_MSG"
+
+          if echo "$COMMIT_MSG" | grep -qiE "BREAKING[[:space:]]CHANGE|^[a-z]+(\([^)]+\))?!:"; then
+            BUMP="major"
+          elif echo "$COMMIT_MSG" | grep -qiE "^feat(\([^)]+\))?:"; then
+            BUMP="minor"
+          else
+            # fix:, chore:, docs:, refactor:, etc. → patch
+            BUMP="patch"
+          fi
+
+          echo "Version bump type: $BUMP"
+          echo "bump=$BUMP" >> "$GITHUB_OUTPUT"
+
+      - name: Bump version in package.json
+        run: npm version ${{ steps.bump.outputs.bump }} --no-git-tag-version
+
+      - name: Update CHANGELOG.md
+        run: |
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          DATE=$(date +%Y-%m-%d)
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            COMMIT_MSG="${{ github.event.pull_request.title }}"
+          else
+            COMMIT_MSG=$(git log -1 --pretty=%B | head -1)
+          fi
+
+          ENTRY="## [$NEW_VERSION] - $DATE\n\n- $COMMIT_MSG\n"
+
+          if [ -f CHANGELOG.md ]; then
+            printf "# Changelog\n\n%b\n%s" "$ENTRY" "$(tail -n +2 CHANGELOG.md)" > CHANGELOG.md
+          else
+            printf "# Changelog\n\n%b" "$ENTRY" > CHANGELOG.md
+          fi
+
+          echo "✅ New version: $NEW_VERSION"
+          cat CHANGELOG.md
+
+      - name: Commit and push version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json CHANGELOG.md
+          git commit -m "chore: bump version to $(node -p \"require('./package.json').version\") [skip ci]"
+          git push

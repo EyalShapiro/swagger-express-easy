@@ -1,9 +1,80 @@
 import type { ParsedRoute } from '../types/express';
-import type { SwaggerOperation, SwaggerPathItem } from '../types/swagger';
+import type { SwaggerOperation, SwaggerPathItem, SwaggerParameter } from '../types/swagger';
 import { normalizePath } from '../utils/path';
 
 export interface ParseResult {
   paths: Record<string, SwaggerPathItem>;
+}
+
+/**
+ * Automatically extracts path parameter names from an OpenAPI path string.
+ *
+ * @param {string} openApiPath - The OpenAPI-formatted path (e.g. `/users/{id}`).
+ * @returns {SwaggerParameter[]} Array of default path parameter definitions.
+ */
+export function autoDetectPathParameters(openApiPath: string): SwaggerParameter[] {
+  const pathParamNames = [...openApiPath.matchAll(/\{([^}]+)\}/g)].map((m) => m[1]);
+  return pathParamNames.map((name) => ({
+    name,
+    in: 'path',
+    required: true,
+    schema: { type: 'string' },
+  }));
+}
+
+function resolveRoutePath(route: ParsedRoute, isGlobalCaseSensitive: boolean): string {
+  const isRouteCaseSensitive =
+    route?.meta?.caseSensitive !== undefined ? route.meta.caseSensitive : isGlobalCaseSensitive;
+  const rawPath = isRouteCaseSensitive ? route?.path : route?.path?.toLowerCase();
+  return normalizePath(rawPath ?? '');
+}
+
+function ensurePathEntry(
+  paths: Record<string, SwaggerPathItem>,
+  openApiPath: string,
+  method: string,
+): SwaggerOperation {
+  if (!paths[openApiPath]) {
+    paths[openApiPath] = {};
+  }
+  const pathItem = paths[openApiPath] as Record<string, SwaggerOperation>;
+  if (!pathItem[method]) {
+    pathItem[method] = {
+      responses: { 200: { description: 'OK' } },
+    } as SwaggerOperation;
+  }
+  return pathItem[method] as SwaggerOperation;
+}
+
+function addAutoPathParams(op: SwaggerOperation, openApiPath: string) {
+  const autoParams = autoDetectPathParameters(openApiPath);
+  if (autoParams.length > 0) {
+    if (!op.parameters) {
+      op.parameters = [];
+    }
+    for (const param of autoParams) {
+      const alreadyDefined = op.parameters.some((p) => p.name === param.name && p.in === 'path');
+      if (!alreadyDefined) {
+        op.parameters.push(param);
+      }
+    }
+  }
+}
+
+function addMulterRequestBody(
+  op: SwaggerOperation,
+  middlewares: ((...args: unknown[]) => unknown)[],
+) {
+  const multerMetadata = parseMulterMiddlewares(middlewares);
+  if (multerMetadata) {
+    op.requestBody = {
+      content: {
+        'multipart/form-data': {
+          schema: multerMetadata.schema,
+        },
+      },
+    };
+  }
 }
 
 /**
@@ -20,37 +91,11 @@ export function parseRoutes(routes: ParsedRoute[], isGlobalCaseSensitive = false
   const paths: Record<string, SwaggerPathItem> = {};
 
   for (const route of routes ?? []) {
-    // Determine case sensitivity
-    const isRouteCaseSensitive =
-      route?.meta?.caseSensitive !== undefined ? route.meta.caseSensitive : isGlobalCaseSensitive;
+    const openApiPath = resolveRoutePath(route, isGlobalCaseSensitive);
+    const op = ensurePathEntry(paths, openApiPath, route.method);
 
-    const rawPath = isRouteCaseSensitive ? route?.path : route?.path?.toLowerCase();
-    const openApiPath = normalizePath(rawPath ?? '');
-
-    if (!paths[openApiPath]) {
-      paths[openApiPath] = {};
-    }
-
-    const pathItem = paths[openApiPath] as Record<string, SwaggerOperation>;
-    if (!pathItem[route?.method]) {
-      pathItem[route?.method] = {
-        responses: { 200: { description: 'OK' } },
-      } as SwaggerOperation;
-    }
-
-    const op = pathItem[route?.method] as SwaggerOperation;
-
-    // Parse Multer
-    const multerMetadata = parseMulterMiddlewares(route?.middlewares ?? []);
-    if (multerMetadata) {
-      op.requestBody = {
-        content: {
-          'multipart/form-data': {
-            schema: multerMetadata.schema,
-          },
-        },
-      };
-    }
+    addAutoPathParams(op, openApiPath);
+    addMulterRequestBody(op, route.middlewares ?? []);
   }
 
   return { paths };
@@ -73,9 +118,7 @@ function parseMulterMiddlewares(middlewares: ((...args: unknown[]) => unknown)[]
     return {
       schema: {
         type: 'object',
-        properties: {
-          file: { type: 'string', format: 'binary' },
-        },
+        properties: { file: { type: 'string', format: 'binary' } },
       },
     };
   }

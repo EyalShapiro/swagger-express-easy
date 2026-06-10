@@ -1,10 +1,12 @@
 import type { Request, Response, NextFunction, RequestHandler } from 'express';
 import swaggerUi from 'swagger-ui-express';
+
 import type { SwaggerDocument } from '../types/swagger';
+import { cloneDocument } from '../utils/object';
 
 export interface CustomSwaggerMiddlewareOptions {
   swaggerDocument: SwaggerDocument;
-  swaggerUiOptions?: swaggerUi.SwaggerUiOptions;
+  swaggerUiOptions?: swaggerUi.SwaggerUiOptions | undefined;
   darkMode?: boolean;
 }
 
@@ -21,34 +23,34 @@ export function customSwaggerMiddleware(options: CustomSwaggerMiddlewareOptions)
   const uiOptions = { ...options.swaggerUiOptions };
 
   if (options.darkMode) {
-    uiOptions.customCss =
-      (uiOptions.customCss || '') +
-      '\n.swagger-ui { filter: invert(88%) hue-rotate(180deg); }\n.swagger-ui .microlight { filter: invert(100%) hue-rotate(180deg); }';
+    uiOptions.customCss = [
+      uiOptions.customCss,
+      '.swagger-ui { filter: invert(88%) hue-rotate(180deg); }',
+      '.swagger-ui .microlight { filter: invert(100%) hue-rotate(180deg); }',
+    ]
+      .filter(Boolean)
+      .join('\n');
   }
 
-  return [
-    ...swaggerUi.serve,
-    (req: Request, res: Response, next: NextFunction) => {
-      if (res.headersSent) return;
+  const swaggerMiddleware = (req: Request, res: Response, next: NextFunction) => {
+    if (res.headersSent) return;
 
-      const doc = options.swaggerDocument
-        ? JSON.parse(JSON.stringify(options.swaggerDocument))
-        : {};
+    const doc = cloneDocument(options.swaggerDocument, {});
 
-      const protocol = req.protocol;
-      const host = req.get('host') || 'localhost';
-      const requestUrl = `${protocol}://${host}/`;
+    const protocol = req.protocol;
+    const host = req.get('host') || 'localhost';
+    const requestUrl = `${protocol}://${host}/`;
 
-      if (
-        !doc.servers ||
-        doc.servers.length === 0 ||
-        (doc.servers.length === 1 && doc.servers[0].url === 'http://localhost:3000/')
-      ) {
-        doc.servers = [{ url: requestUrl }];
-      }
+    if (
+      !doc.servers ||
+      doc.servers.length === 0 ||
+      (doc.servers.length === 1 && doc.servers[0].url === 'http://localhost:3000/')
+    ) {
+      doc.servers = [{ url: requestUrl }];
+    }
 
-      const setupMw = swaggerUi.setup(doc, uiOptions);
-      return setupMw(req, res, next);
-    },
-  ];
+    const setupMw = swaggerUi.setup(doc, uiOptions);
+    return setupMw(req, res, next);
+  };
+  return [...swaggerUi.serve, swaggerMiddleware];
 }

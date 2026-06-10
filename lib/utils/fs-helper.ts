@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs, { type FSWatcher, type WatchEventType } from 'fs';
 import path from 'path';
 
 /**
@@ -18,7 +18,7 @@ export function fileExists(filePath: string): boolean {
  * @param {string} filePath - Absolute path to the target file.
  * @returns {void}
  */
-export function ensureDirForFile(filePath: string): void {
+export function ensureDirForFile(filePath: string) {
   const dir = path.dirname(filePath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
@@ -34,7 +34,7 @@ export function ensureDirForFile(filePath: string): void {
  * @example
  * writeJsonFile('/tmp/swagger.json', { openapi: '3.0.0' });
  */
-export function writeJsonFile(filePath: string, data: unknown): void {
+export function writeJsonFile(filePath: string, data: unknown) {
   ensureDirForFile(filePath);
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
 }
@@ -57,4 +57,18 @@ export function readJsonFile<T = unknown>(filePath: string): T | undefined {
   } catch {
     return undefined;
   }
+}
+
+/**
+ * Watches a directory recursively for file changes.
+ *
+ * @param {string} dirPath - Absolute path to the directory.
+ * @param {(eventType: WatchEventType, filename: string | null) => void} listener - Callback for file events.
+ * @returns {FSWatcher} The file system watcher instance.
+ */
+export function watchDirectory(
+  dirPath: string,
+  listener: (eventType: WatchEventType, filename: string | null) => void,
+): FSWatcher {
+  return fs.watch(dirPath, { recursive: true }, listener);
 }

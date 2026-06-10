@@ -5,6 +5,7 @@ import type { Express } from 'express';
 import type { ResolvedSwaggerConfig } from '../types/internal';
 import type { SwaggerDocument } from '../types/swagger';
 import { readJsonFile, writeJsonFile } from '../utils/fs-helper';
+import { printSummary } from '../utils/logger';
 import { resolveEndpoints } from './endpoints';
 import { mergeDynamicRoutes, mergeManualRoutes, injectSecuritySchemes } from './merger';
 
@@ -42,12 +43,21 @@ async function runSwaggerAutogen(
     autoBody: true,
     autoQuery: true,
     autoResponse: true,
+    disableLogs: true,
   };
 
+  const isDefaultList = !config?.endpointsRoutes;
   const rawEndpoints = config?.endpointsRoutes || DEFAULT_SWAGGER_ROUTE_FILES;
-  const endpoints = resolveEndpoints(rawEndpoints);
+  const endpoints = resolveEndpoints(rawEndpoints, isDefaultList);
 
-  await swaggerAutogenFactory(autogenOptions)(fullPath, endpoints, config?.document ?? {});
+  // Suppress swagger-autogen console output temporarily to avoid spam
+  const originalConsoleLog = console.log;
+  console.log = () => {};
+  try {
+    await swaggerAutogenFactory(autogenOptions)(fullPath, endpoints, config?.document ?? {});
+  } finally {
+    console.log = originalConsoleLog;
+  }
 
   const doc: SwaggerDocument = readJsonFile<SwaggerDocument>(fullPath) ?? {};
   if (!doc.openapi) {
@@ -84,6 +94,17 @@ export async function generateDocument(
   injectSecuritySchemes(doc, config?.security);
 
   writeJsonFile(fullPath, doc);
+
+  const routeCount = Object.values(doc.paths || {}).reduce(
+    (acc, methods) => acc + Object.keys(methods || {}).length,
+    0,
+  );
+
+  printSummary({
+    routeCount,
+    swaggerPath: config.basePath || '/api-docs',
+    outputFile: fullPath,
+  });
 
   return doc;
 }

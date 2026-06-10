@@ -8,7 +8,7 @@ import type http from 'http';
  * @param {string | number} port - The port the server is binding to.
  * @returns {void}
  */
-export function handleServerErrors(server: http.Server, port: string | number): void {
+export function handleServerErrors(server: http.Server, port: string | number) {
   server.on('error', (error: NodeJS.ErrnoException) => {
     if (error.code === 'EADDRINUSE') {
       console.error(`\x1b[31m✖ Error: Port ${port} already in use.\x1b[0m`);

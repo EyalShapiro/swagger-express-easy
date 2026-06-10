@@ -1,82 +1,10 @@
-/**
- * Supported OpenAPI data types for schema properties.
- */
-export type SchemaPropertyType =
-  | 'string'
-  | 'integer'
-  | 'number'
-  | 'boolean'
-  | 'array'
-  | 'object'
-  | 'null';
-
-/**
- * Definition of a single property inside an OpenAPI schema.
- */
-export interface SchemaPropertyDef<T = unknown> {
-  /**
-   * The data type of the property.
-   */
-  type: SchemaPropertyType;
-
-  /**
-   * Whether this property is required.
-   * @default false
-   */
-  required?: boolean;
-
-  /**
-   * OpenAPI format hint.
-   * Examples: 'email', 'date-time', 'int64', 'uuid'.
-   */
-  format?: string;
-
-  /**
-   * An example value for this property to be displayed in Swagger UI.
-   */
-  example?: T;
-
-  /**
-   * A human-readable description of the property.
-   */
-  description?: string;
-
-  /**
-   * For type: 'array' — defines the schema of the items within the array.
-   */
-  items?: { type: SchemaPropertyType } & Record<string, unknown>;
-
-  /**
-   * For type: 'object' — defines the nested properties of the object.
-   */
-  properties?: Record<string, SchemaPropertyDef>;
-
-  /**
-   * Possible enum values for the property.
-   */
-  enum?: unknown[];
-
-  /**
-   * The default value for the property.
-   */
-  default?: unknown;
-}
-
-/**
- * Represents a fully resolved OpenAPI schema object in the Swagger document.
- */
-export interface OpenAPISchema {
-  type: 'object';
-  required?: string[];
-  properties: Record<string, Omit<SchemaPropertyDef, 'required'>>;
-  description?: string;
-  example?: Record<string, unknown>;
-}
+import type { OpenAPISchema, SchemaPropertyDef, SchemaPropertyType } from '../types/schemas.type';
 
 /**
  * Singleton manager for defining and registering reusable OpenAPI components/schemas (Entities).
  * Registered schemas are automatically injected into `#/components/schemas`.
  */
+
 export class SchemaManager {
   private static instance: SchemaManager;
   private registry: Map<string, OpenAPISchema> = new Map();
@@ -158,7 +86,7 @@ export class SchemaManager {
   /**
    * Clears all registered schemas from the registry.
    */
-  clear(): void {
+  clear() {
     this.registry.clear();
   }
 }
@@ -182,7 +110,9 @@ export const defineSchema = (
   name: string,
   properties: Record<string, SchemaPropertyDef>,
   description?: string,
-) => manager.define(name, properties, description);
+): OpenAPISchema => {
+  return manager.define(name, properties, description);
+};
 
 /**
  * Defines a new reusable schema (Entity) with strong TypeScript typing.
@@ -223,11 +153,7 @@ export function defineEntityFromExample<T extends object>(
   const properties: Record<string, SchemaPropertyDef> = {};
 
   for (const [key, value] of Object.entries(example ?? {})) {
-    properties[key] = {
-      type: inferSwaggerType(value),
-      example: value,
-      required: true,
-    };
+    properties[key] = { type: inferSwaggerType(value), example: value, required: true };
   }
 
   return manager.define(name, properties, description);

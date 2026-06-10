@@ -1,10 +1,18 @@
 import { type Express } from 'express';
+import type { SwaggerUiOptions } from 'swagger-ui-express';
+
 import type { SwaggerSetupOptions } from '../types/internal';
 import { generateDocument } from '../core/generator';
 import { buildSwaggerConfig } from './helpers';
-import { customSwaggerMiddleware } from './middleware';
-import type { SwaggerDocument } from 'swagger-express-easy/types/swagger';
+import { customSwaggerMiddleware, type CustomSwaggerMiddlewareOptions } from './middleware';
+import { FileWatcher } from '../core/watcher';
+import { logError } from '../utils/logger';
+import type { SwaggerDocument } from '../types/swagger';
 
+type SwaggerUiContext = {
+  swaggerDocument: SwaggerDocument | Record<string, unknown> | undefined;
+  swaggerUiOptions?: Record<string, unknown> | SwaggerUiOptions;
+};
 /**
  * Core manager class for generating and serving the Swagger/OpenAPI document.
  * Handles document generation via `swagger-autogen`, route scanning, and UI mounting.
@@ -16,7 +24,8 @@ import type { SwaggerDocument } from 'swagger-express-easy/types/swagger';
 export class SwaggerManager {
   private app: Express;
   private options: SwaggerSetupOptions;
-  private swaggerDocument: SwaggerDocument | Record<string, unknown> | undefined;
+  private swaggerDocument: SwaggerUiContext['swaggerDocument'];
+  private watcher: FileWatcher | null = null;
 
   /**
    * @param {Express} app - The Express application instance.
@@ -35,7 +44,7 @@ export class SwaggerManager {
    */
   async setup(): Promise<{
     path: string;
-    document: SwaggerDocument | Record<string, unknown> | undefined;
+    document: SwaggerUiContext['swaggerDocument'];
   }> {
     const config = buildSwaggerConfig(this.options);
     const swaggerPath = this.options?.path ?? '/api-docs';
@@ -43,31 +52,56 @@ export class SwaggerManager {
     try {
       this.swaggerDocument = await generateDocument(this.app, config);
 
-      const optionsMiddleware = {
+      const optionsMiddleware: SwaggerUiContext = {
         swaggerDocument: this.swaggerDocument,
         swaggerUiOptions: this.options?.swaggerUiOptions,
       };
 
-      if (this.options?.watch) {
-        // Basic watch mode: in a real implementation this would hook into fs.watch
-        // or a middleware that regenerates on request in non-prod.
-        this.app.use(swaggerPath, async (_req, _res, next) => {
-          this.swaggerDocument = await generateDocument(this.app, config);
-          optionsMiddleware.swaggerDocument = this.swaggerDocument;
-          next();
-        });
-      }
+      this.mountSwaggerUI(swaggerPath, optionsMiddleware);
 
-      this.app.use(swaggerPath, customSwaggerMiddleware(optionsMiddleware));
+      if (this.options?.watch) {
+        this.startWatcher(config, optionsMiddleware);
+      }
     } catch (err) {
-      console.error('\x1b[31m[swagger-express-easy] Failed to initialize Swagger.\x1b[0m', err);
-      // Fallback
-      this.app.use(swaggerPath, (_req, res) => {
-        res.status(500).json({ error: 'Swagger Initialization Failed' });
-      });
+      logError('Failed to initialize Swagger.', err);
+      this.mountFallbackHandler(swaggerPath);
     }
 
     return { path: swaggerPath, document: this.swaggerDocument };
+  }
+
+  private mountSwaggerUI(swaggerPath: string, optionsMiddleware: SwaggerUiContext) {
+    this.app.use(
+      swaggerPath,
+      customSwaggerMiddleware(optionsMiddleware as CustomSwaggerMiddlewareOptions),
+    );
+  }
+
+  private mountFallbackHandler(swaggerPath: string) {
+    this.app.use(swaggerPath, (_req, res) => {
+      res.status(500).json({ error: 'Swagger Initialization Failed' });
+    });
+  }
+
+  private startWatcher(
+    config: ReturnType<typeof buildSwaggerConfig>,
+    optionsMiddleware: SwaggerUiContext,
+  ) {
+    this.watcher = new FileWatcher(async () => {
+      try {
+        this.swaggerDocument = await generateDocument(this.app, config);
+        optionsMiddleware.swaggerDocument = this.swaggerDocument;
+      } catch (err) {
+        logError('Failed to regenerate Swagger document during watch.', err);
+      }
+    });
+
+    // Determine paths to watch based on config or default to 'src'
+    const pathsToWatch = config.endpointsRoutes?.length
+      ? config.endpointsRoutes.map((p) => p.replace(/\*.*$/, '')) // strip glob parts for directories
+      : [process.cwd()];
+
+    this.watcher.start(pathsToWatch);
   }
 }
 

@@ -5,27 +5,39 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-
+    "types": [
+      "node",
+      "jest"
+    ],
     /* Emit */
     "declaration": true,
     "outDir": "./dist",
-
     /* Type Checking */
     "strict": true,
     "skipLibCheck": true,
-
     "moduleResolution": "node",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "baseUrl": "./",
     "paths": {
-      "@/*": ["src/*"],
-      "swagger-express-easy": ["lib/index.ts"],
-      "swagger-express-easy/*": ["lib/*"]
+      "@/*": [
+        "src/*"
+      ],
+      "swagger-express-easy": [
+        "lib/index.ts"
+      ],
+      "swagger-express-easy/*": [
+        "lib/*"
+      ]
     }
   },
-  "include": ["lib/**/*.ts", "tests/**/*.ts"],
-  "exclude": ["example/**/*"],
+  "include": [
+    "lib/**/*.ts",
+    "tests/**/*.ts"
+  ],
+  "exclude": [
+    "example/**/*"
+  ],
   "ts-node": {
     "compilerOptions": {
       "module": "commonjs"
