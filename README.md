@@ -17,7 +17,6 @@ Stop writing manual JSON/YAML — just write your code, and let us handle the re
 - **File Upload Support**: Easy documentation for `multipart/form-data`.
 - **Multi-Instance Support**: Run multiple Swagger servers with isolated routes in a single process.
 - **Zero Configuration**: Smart defaults from your `package.json`.
-- **Monorepo Ready**: Modern workspace separating the production library (`lib/`) from standalone examples (`example/`).
 
 ---
 
