@@ -20,13 +20,13 @@ export function isGlobPattern(pattern: string): boolean {
  * @param {string} filePath - Absolute path to the missing file.
  * @returns {void}
  */
-export function warnMissingFileOnce(filePath: string): void {
+export function warnMissingFileOnce(filePath: string) {
   if (!warnedFiles.has(filePath)) {
     warnedFiles.add(filePath);
     logErrorWithSuggestion(
       'Route configuration not found',
       filePath,
-      'Verify the file exists and the path is correct in your endpointsRoutes configuration.'
+      'Verify the file exists and the path is correct in your endpointsRoutes configuration.',
     );
   }
 }
@@ -52,4 +52,3 @@ export function resolveEndpoints(rawEndpoints: string[], isDefaultList = false):
   }
   return endpoints;
 }
-

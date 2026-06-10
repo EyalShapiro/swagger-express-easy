@@ -22,7 +22,7 @@ export class FileWatcher {
    *
    * @param {string[]} pathsToWatch - Array of absolute or relative paths to watch.
    */
-  start(pathsToWatch: string[]): void {
+  start(pathsToWatch: string[]) {
     if (this.isWatching) {
       this.stop();
     }
@@ -68,7 +68,7 @@ export class FileWatcher {
   /**
    * Stops all active file watchers.
    */
-  stop(): void {
+  stop() {
     this.isWatching = false;
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
@@ -81,7 +81,7 @@ export class FileWatcher {
     this.activeWatchers = [];
   }
 
-  private triggerChange(): void {
+  private triggerChange() {
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
     }

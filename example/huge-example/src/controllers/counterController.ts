@@ -10,7 +10,7 @@ let counter = 0;
  * @param {Response} res - Express response object.
  * @returns {void} Sends JSON response with counter value and timestamp.
  */
-export const getCounter = (req: Request, res: Response): void => {
+export const getCounter = (req: Request, res: Response) => {
   const timeStamp = res.locals?.timeStamp || new Date().toUTCString();
   try {
     const statusCode = 200;
@@ -29,7 +29,7 @@ export const getCounter = (req: Request, res: Response): void => {
  * @param {Response} res - Express response object.
  * @returns {void} Sends JSON response with updated counter value and timestamp.
  */
-export const addOneCounter = (req: Request, res: Response): void => {
+export const addOneCounter = (req: Request, res: Response) => {
   const timeStamp = res.locals?.timeStamp || new Date().toUTCString();
   try {
     counter++;
@@ -50,7 +50,7 @@ export const addOneCounter = (req: Request, res: Response): void => {
  * @param {Response} res - Express response object.
  * @returns {void} Sends JSON response with updated counter value and timestamp.
  */
-export const subOneCounter = (req: Request, res: Response): void => {
+export const subOneCounter = (req: Request, res: Response) => {
   const timeStamp = res.locals?.timeStamp || new Date().toUTCString();
   try {
     counter--;
@@ -71,7 +71,7 @@ export const subOneCounter = (req: Request, res: Response): void => {
  * @param {Response} res - Express response object.
  * @returns {void} Sends JSON response confirming counter reset with timestamp.
  */
-export const deleteCounter = (req: Request, res: Response): void => {
+export const deleteCounter = (req: Request, res: Response) => {
   const timeStamp = res.locals?.timeStamp || new Date().toUTCString();
   try {
     counter = 0;

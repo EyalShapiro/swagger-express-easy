@@ -18,7 +18,7 @@ export function fileExists(filePath: string): boolean {
  * @param {string} filePath - Absolute path to the target file.
  * @returns {void}
  */
-export function ensureDirForFile(filePath: string): void {
+export function ensureDirForFile(filePath: string) {
   const dir = path.dirname(filePath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
@@ -34,7 +34,7 @@ export function ensureDirForFile(filePath: string): void {
  * @example
  * writeJsonFile('/tmp/swagger.json', { openapi: '3.0.0' });
  */
-export function writeJsonFile(filePath: string, data: unknown): void {
+export function writeJsonFile(filePath: string, data: unknown) {
   ensureDirForFile(filePath);
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
 }

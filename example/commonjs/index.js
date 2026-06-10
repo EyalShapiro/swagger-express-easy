@@ -97,16 +97,16 @@ app.get('/headers', (req, res) => {
 });
 
 app.use('/admin', adminRouter);
-
+const port = process.env.PORT || 5000;
 async function start() {
   await setupSwagger(app, {
     path: '/api-docs',
     outputFile: './swagger.json',
   });
 
-  app.listen(3000, () => {
-    console.log('Server running at http://localhost:3000');
-    console.log('Swagger UI at http://localhost:3000/api-docs');
+  app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+    console.log(`Swagger UI at http://localhost:${port}/api-docs`);
   });
 }
 

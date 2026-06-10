@@ -2,13 +2,13 @@ export interface SwaggerSecurityScheme {
   type: 'apiKey' | 'http';
   name?: string;
   in?: 'header' | 'query' | 'cookie';
-  scheme?: 'bearer' | string;
+  scheme?: 'bearer' | (string & {});
   bearerFormat?: string;
 }
 
 export interface SwaggerParameter {
   name: string;
-  in: 'path' | 'query' | 'header' | 'cookie' | 'formData' | string;
+  in: 'path' | 'query' | 'header' | 'cookie' | 'formData' | (string & {});
   required?: boolean;
   description?: string;
   schema?: {
@@ -31,16 +31,9 @@ export interface SwaggerOperation {
   security?: Record<string, string[]>[];
 }
 
-export interface SwaggerPathItem {
-  get?: SwaggerOperation;
-  post?: SwaggerOperation;
-  put?: SwaggerOperation;
-  delete?: SwaggerOperation;
-  patch?: SwaggerOperation;
-  options?: SwaggerOperation;
-  head?: SwaggerOperation;
-}
+type HttpMethod = 'get' | 'post' | 'put' | 'delete' | 'patch' | 'options' | 'head';
 
+export type SwaggerPathItem = Partial<Record<HttpMethod, SwaggerOperation>>;
 export interface SwaggerDocument {
   openapi?: string;
   swagger?: string;

@@ -34,15 +34,15 @@ npm install swagger-express-easy
 
 The project uses a **monorepo structure** with ready-to-run examples inside the [`example/`](https://github.com/EyalShapiro/swagger-express-easy/tree/main/example) folder.
 
-| Example | Description |
-|---|---|
+| Example                                                                                                  | Description                                            |
+| -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | [`simple-routers`](https://github.com/EyalShapiro/swagger-express-easy/tree/main/example/simple-routers) | Basic Express router setup with auto-generated Swagger |
-| [`class-based`](https://github.com/EyalShapiro/swagger-express-easy/tree/main/example/class-based) | Using `@SwaggerRoute` class decorator |
-| [`multi-app`](https://github.com/EyalShapiro/swagger-express-easy/tree/main/example/multi-app) | Multiple isolated Swagger instances in one process |
-| [`multer-upload`](https://github.com/EyalShapiro/swagger-express-easy/tree/main/example/multer-upload) | File upload documentation with `multipart/form-data` |
-| [`commonjs`](https://github.com/EyalShapiro/swagger-express-easy/tree/main/example/commonjs) | CommonJS (`require`) usage |
-| [`huge-example`](https://github.com/EyalShapiro/swagger-express-easy/tree/main/example/huge-example) | Large-scale API with many routes and schemas |
-| [`maui`](https://github.com/EyalShapiro/swagger-express-easy/tree/main/example/maui) | Integration example |
+| [`class-based`](https://github.com/EyalShapiro/swagger-express-easy/tree/main/example/class-based)       | Using `@SwaggerRoute` class decorator                  |
+| [`multi-app`](https://github.com/EyalShapiro/swagger-express-easy/tree/main/example/multi-app)           | Multiple isolated Swagger instances in one process     |
+| [`multer-upload`](https://github.com/EyalShapiro/swagger-express-easy/tree/main/example/multer-upload)   | File upload documentation with `multipart/form-data`   |
+| [`commonjs`](https://github.com/EyalShapiro/swagger-express-easy/tree/main/example/commonjs)             | CommonJS (`require`) usage                             |
+| [`huge-example`](https://github.com/EyalShapiro/swagger-express-easy/tree/main/example/huge-example)     | Large-scale API with many routes and schemas           |
+| [`maui`](https://github.com/EyalShapiro/swagger-express-easy/tree/main/example/maui)                     | Integration example                                    |
 
 To run any example locally:
 
@@ -71,14 +71,16 @@ import { SwaggerAuto } from 'swagger-express-easy';
 const app = express();
 
 const swagger = new SwaggerAuto(app, {
-  path: '/api-docs',          // URL path for Swagger UI
-  watch: true,                // Regenerate on every request (great for development)
+  path: '/api-docs', // URL path for Swagger UI
+  watch: true, // Regenerate on every request (great for development)
   endpointsRoutes: ['./src/routes/*.ts'], // Glob patterns to scan
 });
 
 async function start() {
   await swagger.setup();
-  app.listen(3000, () => console.log('🚀 Server & Swagger running on http://localhost:3000/api-docs'));
+  app.listen(3000, () =>
+    console.log('🚀 Server & Swagger running on http://localhost:3000/api-docs'),
+  );
 }
 start();
 ```
@@ -133,14 +135,14 @@ Run multiple Express apps or micro-services in one process with completely isola
 // App 1
 const swagger1 = new SwaggerAuto(app1, {
   path: '/docs-app1',
-  basePath: 'api',        // Only shows routes starting with /api
+  basePath: 'api', // Only shows routes starting with /api
   outputFile: 'swagger-app1.json',
 });
 
 // App 2
 const swagger2 = new SwaggerAuto(app2, {
   path: '/docs-app2',
-  basePath: 'myApi',      // Only shows routes starting with /myApi
+  basePath: 'myApi', // Only shows routes starting with /myApi
   outputFile: 'swagger-app2.json',
 });
 
@@ -159,9 +161,9 @@ Define your models once and reference them anywhere using `$ref`.
 import { defineSchema, schemaRef, createSwaggerRoute } from 'swagger-express-easy';
 
 defineSchema('User', {
-  id:       { type: 'integer', required: true, example: 1 },
-  username: { type: 'string',  required: true, example: 'johndoe' },
-  email:    { type: 'string',  format: 'email' },
+  id: { type: 'integer', required: true, example: 1 },
+  username: { type: 'string', required: true, example: 'johndoe' },
+  email: { type: 'string', format: 'email' },
 });
 
 createSwaggerRoute({
@@ -262,17 +264,17 @@ export const uploadFile = withSwagger(
 
 ## ⚙️ Configuration Options
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `path` | `string` | `'/api-docs'` | URL path for the Swagger UI |
-| `watch` | `boolean` | `false` | Regenerate docs on every request to `path` |
-| `basePath` | `string` | `'/'` | Filter routes to only those starting with this path |
-| `outputFile` | `string` | `'swagger-output.json'` | Filename for the generated JSON spec |
-| `outputDir` | `string` | `process.cwd()` | Directory for the output file |
-| `endpointsRoutes` | `string[]` | `['./src/app.ts', ...]` | Glob patterns to scan for routes |
-| `bearerAuth` | `boolean` | `true` | Automatically add JWT Bearer auth to spec |
-| `document.info.title` | `string` | from `package.json` | API title shown in Swagger UI |
-| `document.info.version` | `string` | from `package.json` | API version shown in Swagger UI |
+| Option                  | Type       | Default                 | Description                                         |
+| ----------------------- | ---------- | ----------------------- | --------------------------------------------------- |
+| `path`                  | `string`   | `'/api-docs'`           | URL path for the Swagger UI                         |
+| `watch`                 | `boolean`  | `false`                 | Regenerate docs on every request to `path`          |
+| `basePath`              | `string`   | `'/'`                   | Filter routes to only those starting with this path |
+| `outputFile`            | `string`   | `'swagger-output.json'` | Filename for the generated JSON spec                |
+| `outputDir`             | `string`   | `process.cwd()`         | Directory for the output file                       |
+| `endpointsRoutes`       | `string[]` | `['./src/app.ts', ...]` | Glob patterns to scan for routes                    |
+| `bearerAuth`            | `boolean`  | `true`                  | Automatically add JWT Bearer auth to spec           |
+| `document.info.title`   | `string`   | from `package.json`     | API title shown in Swagger UI                       |
+| `document.info.version` | `string`   | from `package.json`     | API version shown in Swagger UI                     |
 
 ---
 
@@ -283,7 +285,6 @@ npm test
 ```
 
 ---
-
 
 ## 📄 License
 

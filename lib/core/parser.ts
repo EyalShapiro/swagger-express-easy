@@ -46,7 +46,7 @@ function ensurePathEntry(
   return pathItem[method] as SwaggerOperation;
 }
 
-function addAutoPathParams(op: SwaggerOperation, openApiPath: string): void {
+function addAutoPathParams(op: SwaggerOperation, openApiPath: string) {
   const autoParams = autoDetectPathParameters(openApiPath);
   if (autoParams.length > 0) {
     if (!op.parameters) {
@@ -64,7 +64,7 @@ function addAutoPathParams(op: SwaggerOperation, openApiPath: string): void {
 function addMulterRequestBody(
   op: SwaggerOperation,
   middlewares: ((...args: unknown[]) => unknown)[],
-): void {
+) {
   const multerMetadata = parseMulterMiddlewares(middlewares);
   if (multerMetadata) {
     op.requestBody = {
@@ -118,9 +118,7 @@ function parseMulterMiddlewares(middlewares: ((...args: unknown[]) => unknown)[]
     return {
       schema: {
         type: 'object',
-        properties: {
-          file: { type: 'string', format: 'binary' },
-        },
+        properties: { file: { type: 'string', format: 'binary' } },
       },
     };
   }

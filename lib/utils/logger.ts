@@ -24,7 +24,7 @@ export interface SwaggerSummaryInfo {
  *
  * @param {SwaggerSummaryInfo} info - Summary data collected during generation.
  */
-export function printSummary(info: SwaggerSummaryInfo): void {
+export function printSummary(info: SwaggerSummaryInfo) {
   const { routeCount, swaggerPath, serverUrl, outputFile } = info;
   const uiUrl = serverUrl ? `${serverUrl}${swaggerPath}` : swaggerPath;
 
@@ -47,7 +47,7 @@ export function printSummary(info: SwaggerSummaryInfo): void {
  *
  * @param {string} message - Warning message to display.
  */
-export function logWarning(message: string): void {
+export function logWarning(message: string) {
   console.warn(`${YELLOW}${PREFIX} Warning: ${message}${RESET}`);
 }
 
@@ -57,7 +57,7 @@ export function logWarning(message: string): void {
  * @param {string} message - Error description.
  * @param {unknown} [err] - Optional underlying error object.
  */
-export function logError(message: string, err?: unknown): void {
+export function logError(message: string, err?: unknown) {
   console.error(`${RED}${PREFIX} Error: ${message}${RESET}`, err ?? '');
 }
 
@@ -74,7 +74,7 @@ export function logErrorWithSuggestion(
   filePath: string,
   suggestion: string,
   err?: unknown,
-): void {
+) {
   const lines = [
     `${RED}${PREFIX} Error: ${message}${RESET}`,
     `  → ${filePath}`,

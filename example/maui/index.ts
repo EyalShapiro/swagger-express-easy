@@ -3,8 +3,10 @@ import { setupSwagger } from 'swagger-express-easy';
 
 const app = express();
 
-app.get('/data', (req, res) => res.json({ success: true }));
-app.use((req, res, next) => {
+app.get('/hi/:id', (req, res) => res.json({ success: true, name: 'Eyal', id: req.params.id }));
+
+app.get('/data', (_req, res) => res.json({ success: true }));
+app.use((_req, res, next) => {
   console.info('Time:', Date.now());
   next();
 });

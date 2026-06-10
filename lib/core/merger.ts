@@ -14,11 +14,7 @@ import { getCleanBasePath, normalizePath } from '../utils/path';
  * @param {boolean} caseSensitive - Whether route path matching should be case-sensitive.
  * @returns {void}
  */
-export function mergeDynamicRoutes(
-  doc: SwaggerDocument,
-  app: Express,
-  caseSensitive: boolean,
-): void {
+export function mergeDynamicRoutes(doc: SwaggerDocument, app: Express, caseSensitive: boolean) {
   const rawRoutes = scanRoutes(app);
   const parsed = parseRoutes(rawRoutes, caseSensitive);
 
@@ -32,7 +28,7 @@ export function mergeDynamicRoutes(
 /**
  * Inserts or updates a parameter in the parameters list by name and location.
  */
-function upsertParameter(parameters: SwaggerParameter[], param: SwaggerParameter): void {
+function upsertParameter(parameters: SwaggerParameter[], param: SwaggerParameter) {
   const idx = parameters.findIndex((p) => p.name === param.name && p.in === param.in);
   if (idx !== -1) {
     parameters[idx] = { ...parameters[idx], ...param };
@@ -57,7 +53,7 @@ function addCustomParams(
       }
     | string
   >,
-): void {
+) {
   if (!sourceData) return;
   for (const [name, val] of Object.entries(sourceData)) {
     const item: SwaggerParameter = {
@@ -134,7 +130,7 @@ function mergeRouteParameters(
 function mergeRequestBodyAndResponses(
   methodObj: Record<string, unknown>,
   route: SwaggerRouteDefinition,
-): void {
+) {
   if (route?.body) {
     methodObj.requestBody = {
       content: { 'application/json': { schema: route.body } },
@@ -145,10 +141,7 @@ function mergeRequestBodyAndResponses(
   }
 }
 
-function buildMethodObject(
-  pathItem: Record<string, unknown>,
-  route: SwaggerRouteDefinition,
-): void {
+function buildMethodObject(pathItem: Record<string, unknown>, route: SwaggerRouteDefinition) {
   pathItem[route.method] = {
     ...(pathItem[route.method] ?? {}),
     summary: route?.description?.summary,
@@ -166,7 +159,7 @@ function buildMethodObject(
  * @param {boolean} caseSensitive - Whether route path matching should be case-sensitive.
  * @returns {void}
  */
-export function mergeManualRoutes(doc: SwaggerDocument, caseSensitive: boolean): void {
+export function mergeManualRoutes(doc: SwaggerDocument, caseSensitive: boolean) {
   const customRoutes = SwaggerRouteStore.getRouteList();
   for (const route of customRoutes) {
     const rawPath = caseSensitive ? route?.path : route?.path?.toLowerCase();
@@ -206,7 +199,7 @@ export function mergeManualRoutes(doc: SwaggerDocument, caseSensitive: boolean):
 export function injectSecuritySchemes(
   doc: SwaggerDocument,
   security?: Record<string, SwaggerSecurityScheme>,
-): void {
+) {
   if (security) {
     doc.components = doc?.components || {};
     doc.components.securitySchemes = {

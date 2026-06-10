@@ -158,7 +158,7 @@ export class SchemaManager {
   /**
    * Clears all registered schemas from the registry.
    */
-  clear(): void {
+  clear() {
     this.registry.clear();
   }
 }
@@ -182,7 +182,9 @@ export const defineSchema = (
   name: string,
   properties: Record<string, SchemaPropertyDef>,
   description?: string,
-) => manager.define(name, properties, description);
+): OpenAPISchema => {
+  return manager.define(name, properties, description);
+};
 
 /**
  * Defines a new reusable schema (Entity) with strong TypeScript typing.
@@ -223,11 +225,7 @@ export function defineEntityFromExample<T extends object>(
   const properties: Record<string, SchemaPropertyDef> = {};
 
   for (const [key, value] of Object.entries(example ?? {})) {
-    properties[key] = {
-      type: inferSwaggerType(value),
-      example: value,
-      required: true,
-    };
+    properties[key] = { type: inferSwaggerType(value), example: value, required: true };
   }
 
   return manager.define(name, properties, description);
