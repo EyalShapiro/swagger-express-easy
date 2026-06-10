@@ -6,13 +6,25 @@ export interface SwaggerSecurityScheme {
   bearerFormat?: string;
 }
 
+export interface SwaggerParameter {
+  name: string;
+  in: 'path' | 'query' | 'header' | 'cookie' | 'formData' | string;
+  required?: boolean;
+  description?: string;
+  schema?: {
+    type?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
 export interface SwaggerOperation {
   summary?: string;
   description?: string;
   tags?: string[];
   consumes?: string[];
   produces?: string[];
-  parameters?: unknown[];
+  parameters?: SwaggerParameter[];
   requestBody?: unknown;
   responses?: Record<string, unknown>;
   deprecated?: boolean;

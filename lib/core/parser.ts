@@ -1,9 +1,25 @@
 import type { ParsedRoute } from '../types/express';
-import type { SwaggerOperation, SwaggerPathItem } from '../types/swagger';
+import type { SwaggerOperation, SwaggerPathItem, SwaggerParameter } from '../types/swagger';
 import { normalizePath } from '../utils/path';
 
 export interface ParseResult {
   paths: Record<string, SwaggerPathItem>;
+}
+
+/**
+ * Automatically extracts path parameter names from an OpenAPI path string.
+ *
+ * @param {string} openApiPath - The OpenAPI-formatted path (e.g. `/users/{id}`).
+ * @returns {SwaggerParameter[]} Array of default path parameter definitions.
+ */
+export function autoDetectPathParameters(openApiPath: string): SwaggerParameter[] {
+  const pathParamNames = [...openApiPath.matchAll(/\{([^}]+)\}/g)].map((m) => m[1]);
+  return pathParamNames.map((name) => ({
+    name,
+    in: 'path',
+    required: true,
+    schema: { type: 'string' },
+  }));
 }
 
 /**
@@ -39,6 +55,20 @@ export function parseRoutes(routes: ParsedRoute[], isGlobalCaseSensitive = false
     }
 
     const op = pathItem[route?.method] as SwaggerOperation;
+
+    // Auto-detect path parameters
+    const autoParams = autoDetectPathParameters(openApiPath);
+    if (autoParams.length > 0) {
+      if (!op.parameters) {
+        op.parameters = [];
+      }
+      for (const param of autoParams) {
+        const alreadyDefined = op.parameters.some((p) => p.name === param.name && p.in === 'path');
+        if (!alreadyDefined) {
+          op.parameters.push(param);
+        }
+      }
+    }
 
     // Parse Multer
     const multerMetadata = parseMulterMiddlewares(route?.middlewares ?? []);

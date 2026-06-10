@@ -42,10 +42,12 @@ async function runSwaggerAutogen(
     autoBody: true,
     autoQuery: true,
     autoResponse: true,
+    disableLogs: true,
   };
 
+  const isDefaultList = !config?.endpointsRoutes;
   const rawEndpoints = config?.endpointsRoutes || DEFAULT_SWAGGER_ROUTE_FILES;
-  const endpoints = resolveEndpoints(rawEndpoints);
+  const endpoints = resolveEndpoints(rawEndpoints, isDefaultList);
 
   await swaggerAutogenFactory(autogenOptions)(fullPath, endpoints, config?.document ?? {});
 

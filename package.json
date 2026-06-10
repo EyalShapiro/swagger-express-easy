@@ -54,7 +54,6 @@
     "build": "npx rimraf dist && tsc -p tsconfig.build.json",
     "prepublishOnly": "npm run build",
     "dev:examples": "npm run dev --prefix example",
-    "dev": "npm run dev:examples",
     "lint": "eslint lib --fix"
   },
   "peerDependencies": {
@@ -71,9 +70,13 @@
     "eslint": "^8.0.0",
     "jest": "^29.7.0",
     "jest-util": "^30.4.1",
+    "multer": "^1.4.5-lts.1",
     "swagger-autogen": "^2.23.7",
     "ts-jest": "^29.2.5",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2"
+  },
+  "overrides": {
+    "multer": "1.4.5-lts.1"
   }
 }

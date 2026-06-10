@@ -1,5 +1,6 @@
 import path from 'path';
 import { fileExists } from '../utils/fs-helper';
+import { logWarning } from '../utils/logger';
 
 const warnedFiles = new Set<string>();
 
@@ -22,9 +23,7 @@ export function isGlobPattern(pattern: string): boolean {
 export function warnMissingFileOnce(filePath: string): void {
   if (!warnedFiles.has(filePath)) {
     warnedFiles.add(filePath);
-    console.warn(
-      `\x1b[33m[swagger-express-easy] Warning: Route file/configuration not found at "${filePath}". Ignoring.\x1b[0m`,
-    );
+    logWarning(`Route file/configuration not found at "${filePath}". Ignoring.`);
   }
 }
 
@@ -32,9 +31,10 @@ export function warnMissingFileOnce(filePath: string): void {
  * Resolves a list of file paths/patterns, filtering out non-existent concrete files.
  *
  * @param {string[]} rawEndpoints - Array of raw endpoint paths or globs.
+ * @param {boolean} [isDefaultList=false] - Whether these are the default scanned paths.
  * @returns {string[]} Resolved existing file paths and glob patterns.
  */
-export function resolveEndpoints(rawEndpoints: string[]): string[] {
+export function resolveEndpoints(rawEndpoints: string[], isDefaultList = false): string[] {
   const endpoints: string[] = [];
   for (const filePattern of rawEndpoints) {
     const resolvedPath = path.resolve(process.cwd(), filePattern);
@@ -42,9 +42,10 @@ export function resolveEndpoints(rawEndpoints: string[]): string[] {
       endpoints.push(resolvedPath);
     } else if (fileExists(resolvedPath)) {
       endpoints.push(resolvedPath);
-    } else {
+    } else if (!isDefaultList) {
       warnMissingFileOnce(resolvedPath);
     }
   }
   return endpoints;
 }
+

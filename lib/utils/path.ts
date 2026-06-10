@@ -16,7 +16,9 @@ export function normalizePath(path: string): string {
   }
   return normalized || '/';
 }
-
+export function extractPathParams(path: string): string[] {
+  return [...path.matchAll(/:([A-Za-z0-9_]+)/g)].map((match) => match[1]);
+}
 /**
  * Safely joins a basePath and a normalized route path.
  *
