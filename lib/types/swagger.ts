@@ -1,9 +1,22 @@
+import type { HTTPMethod, ParametersType } from '../swagger/routeStore';
+
 export interface SwaggerSecurityScheme {
   type: 'apiKey' | 'http';
   name?: string;
   in?: 'header' | 'query' | 'cookie';
-  scheme?: 'bearer' | string;
+  scheme?: 'bearer' | (string & {});
   bearerFormat?: string;
+}
+
+export interface SwaggerParameter
+  extends
+    Required<Pick<ParametersType, 'name' | 'in'>>,
+    Pick<ParametersType, 'description' | 'required'> {
+  schema?: {
+    type?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
 }
 
 export interface SwaggerOperation {
@@ -12,23 +25,16 @@ export interface SwaggerOperation {
   tags?: string[];
   consumes?: string[];
   produces?: string[];
-  parameters?: unknown[];
+  parameters?: SwaggerParameter[];
   requestBody?: unknown;
   responses?: Record<string, unknown>;
   deprecated?: boolean;
   security?: Record<string, string[]>[];
 }
 
-export interface SwaggerPathItem {
-  get?: SwaggerOperation;
-  post?: SwaggerOperation;
-  put?: SwaggerOperation;
-  delete?: SwaggerOperation;
-  patch?: SwaggerOperation;
-  options?: SwaggerOperation;
-  head?: SwaggerOperation;
-}
-
+export type SwaggerPathItem = Partial<
+  Record<Exclude<HTTPMethod, 'connect' | 'trace'>, SwaggerOperation>
+>;
 export interface SwaggerDocument {
   openapi?: string;
   swagger?: string;

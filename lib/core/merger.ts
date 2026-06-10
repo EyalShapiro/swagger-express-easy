@@ -1,8 +1,9 @@
-import type { Express, Request } from 'express';
-import type { SwaggerDocument } from '../types/swagger';
+import type { Express } from 'express';
+import type { SwaggerDocument, SwaggerParameter, SwaggerSecurityScheme } from '../types/swagger';
 import { scanRoutes } from './scanner';
-import { parseRoutes } from './parser';
+import { parseRoutes, autoDetectPathParameters } from './parser';
 import { SwaggerRouteStore } from '../swagger/routeStore';
+import type { SwaggerRouteDefinition } from '../swagger/routeStore/type';
 import { getCleanBasePath, normalizePath } from '../utils/path';
 
 /**
@@ -13,11 +14,7 @@ import { getCleanBasePath, normalizePath } from '../utils/path';
  * @param {boolean} caseSensitive - Whether route path matching should be case-sensitive.
  * @returns {void}
  */
-export function mergeDynamicRoutes(
-  doc: SwaggerDocument,
-  app: Express,
-  caseSensitive: boolean,
-): void {
+export function mergeDynamicRoutes(doc: SwaggerDocument, app: Express, caseSensitive: boolean) {
   const rawRoutes = scanRoutes(app);
   const parsed = parseRoutes(rawRoutes, caseSensitive);
 
@@ -29,13 +26,140 @@ export function mergeDynamicRoutes(
 }
 
 /**
+ * Inserts or updates a parameter in the parameters list by name and location.
+ */
+function upsertParameter(parameters: SwaggerParameter[], param: SwaggerParameter) {
+  const idx = parameters.findIndex((p) => p.name === param.name && p.in === param.in);
+  if (idx !== -1) {
+    parameters[idx] = { ...parameters[idx], ...param };
+  } else {
+    parameters.push(param);
+  }
+}
+
+/**
+ * Parses and adds query, path, header, or cookie parameters from a helper source.
+ */
+function addCustomParams(
+  parameters: SwaggerParameter[],
+  openApiIn: string,
+  sourceData?: Record<
+    string,
+    | {
+        type?: string;
+        required?: boolean;
+        description?: string;
+        schema?: { type?: string; [key: string]: unknown };
+      }
+    | string
+  >,
+) {
+  if (!sourceData) return;
+  for (const [name, val] of Object.entries(sourceData)) {
+    const item: SwaggerParameter = {
+      name,
+      in: openApiIn,
+      required: openApiIn === 'path',
+      schema: { type: 'string' },
+    };
+    if (typeof val === 'string') {
+      item.description = val;
+    } else if (val && typeof val === 'object') {
+      if (val.type) {
+        item.schema = { ...item.schema, type: val.type };
+      }
+      if (val.required !== undefined) item.required = val.required;
+      if (val.description) item.description = val.description;
+      if (val.schema) {
+        item.schema = { ...item.schema, ...val.schema };
+      }
+    }
+    upsertParameter(parameters, item);
+  }
+}
+
+/**
+ * Merges parameter definitions from custom routes, helpers, and path auto-detection.
+ */
+function mergeRouteParameters(
+  existingParams: SwaggerParameter[] | undefined,
+  route: SwaggerRouteDefinition,
+  normalizedPath: string,
+): SwaggerParameter[] {
+  const parameters: SwaggerParameter[] = [];
+
+  if (Array.isArray(existingParams)) {
+    parameters.push(...existingParams);
+  }
+
+  if (route.parameters) {
+    for (const p of route.parameters) {
+      if (p.name) {
+        upsertParameter(parameters, {
+          name: p.name,
+          in: p.in || 'query',
+          required: p.required,
+          description: p.description,
+          schema: p.schema,
+          ...p,
+        });
+      }
+    }
+  }
+
+  addCustomParams(parameters, 'path', route.params);
+  addCustomParams(parameters, 'query', route.query);
+  addCustomParams(parameters, 'header', route.headers);
+  addCustomParams(parameters, 'cookie', route.cookies);
+
+  // Auto-detect path parameters from the normalized path
+  const autoParams = autoDetectPathParameters(normalizedPath);
+  for (const param of autoParams) {
+    const alreadyDefined = parameters.some((p) => p.name === param.name && p.in === 'path');
+    if (!alreadyDefined) {
+      parameters.push(param);
+    }
+  }
+
+  return parameters;
+}
+
+/**
+ * Merges requestBody and responses for a custom route.
+ */
+function mergeRequestBodyAndResponses(
+  methodObj: Record<string, unknown>,
+  route: SwaggerRouteDefinition,
+) {
+  if (route?.body) {
+    methodObj.requestBody = {
+      content: { 'application/json': { schema: route.body } },
+    };
+  }
+  if (route?.responses) {
+    methodObj.responses = Object.assign(methodObj.responses || {}, route.responses);
+  }
+}
+
+const buildMethodObject = (pathItem: Record<string, unknown>, route: SwaggerRouteDefinition) => {
+  return {
+    ...(pathItem[route.method] ?? {}),
+    summary: route?.description?.summary,
+    description: route?.description?.text,
+    tags: route?.tags ?? (route?.tag ? [route.tag] : undefined),
+    deprecated: route?.deprecated,
+    security: route?.security,
+  };
+};
+
+/**
  * Merges manual SwaggerRoute definitions from SwaggerRouteStore into the Swagger document.
  *
  * @param {SwaggerDocument} doc - The Swagger/OpenAPI document to merge paths into.
  * @param {boolean} caseSensitive - Whether route path matching should be case-sensitive.
  * @returns {void}
  */
-export function mergeManualRoutes(doc: SwaggerDocument, caseSensitive: boolean): void {
+export function mergeManualRoutes(doc: SwaggerDocument, caseSensitive: boolean) {
   const customRoutes = SwaggerRouteStore.getRouteList();
   for (const route of customRoutes) {
     const rawPath = caseSensitive ? route?.path : route?.path?.toLowerCase();
@@ -47,79 +171,21 @@ export function mergeManualRoutes(doc: SwaggerDocument, caseSensitive: boolean):
     }
 
     const pathItem = doc.paths[normalizedPath] as Record<string, unknown>;
-    pathItem[route.method] = {
-      ...(pathItem[route.method] ?? {}),
-      summary: route?.description?.summary,
-      description: route?.description?.text,
-      tags: route?.tags ?? (route?.tag ? [route.tag] : undefined),
-      deprecated: route?.deprecated,
-      security: route?.security,
-    };
+    pathItem[route.method] = buildMethodObject(pathItem, route);
 
-    const existingParams = (pathItem[route.method] as Record<string, unknown>)?.parameters;
-    const parameters: any[] = [];
+    const existingParams = (pathItem[route.method] as Record<string, unknown>)?.parameters as
+      | SwaggerParameter[]
+      | undefined;
 
-    if (Array.isArray(existingParams)) {
-      parameters.push(...existingParams);
-    }
-
-    const upsertParameter = (param: any) => {
-      const idx = parameters.findIndex((p) => p.name === param.name && p.in === param.in);
-      if (idx !== -1) {
-        parameters[idx] = { ...parameters[idx], ...param };
-      } else {
-        parameters.push(param);
-      }
-    };
-
-    if (route.parameters) route.parameters.forEach((p) => upsertParameter(p));
-
-    const addParams = (source: keyof Request, sourceData?: Record<string, any>) => {
-      if (!sourceData) return;
-      for (const [name, val] of Object.entries(sourceData)) {
-        const item: Record<string, any> = {
-          name,
-          in: source,
-          required: source === 'path',
-          schema: { type: 'string' },
-        };
-        if (typeof val === 'string') {
-          item.description = val;
-        } else if (val && typeof val === 'object') {
-          if (val.type) item.schema.type = val.type;
-          if (val.required !== undefined) item.required = val.required;
-          if (val.description) item.description = val.description;
-          if (val.schema) {
-            item.schema = { ...item.schema, ...val.schema };
-          }
-        }
-        upsertParameter(item);
-      }
-    };
-
-    for (const [location, params] of [
-      ['path', route.params],
-      ['query', route.query],
-      ['header', route.headers],
-      ['cookies', route.cookies],
-    ] as const) {
-      addParams(location, params);
-    }
+    const parameters = mergeRouteParameters(existingParams, route, normalizedPath);
 
     if (parameters.length > 0) {
       const methodObj = pathItem[route.method] as Record<string, unknown>;
-      methodObj.parameters = Object.assign(methodObj.parameters || {}, parameters);
+      methodObj.parameters = [...parameters];
     }
 
-    if (route?.body) {
-      (pathItem[route.method] as Record<string, unknown>).requestBody = {
-        content: { 'application/json': { schema: route.body } },
-      };
-    }
-    if (route?.responses) {
-      const methodObj = pathItem[route.method] as Record<string, unknown>;
-      methodObj.responses = Object.assign(methodObj.responses || {}, route.responses);
-    }
+    const methodObj = pathItem[route.method] as Record<string, unknown>;
+    mergeRequestBodyAndResponses(methodObj, route);
   }
 }
 
@@ -127,10 +193,13 @@ export function mergeManualRoutes(doc: SwaggerDocument, caseSensitive: boolean):
  * Injects security schemes config component if configured.
  *
  * @param {SwaggerDocument} doc - The Swagger/OpenAPI document to inject security schemes into.
- * @param {Record<string, any>} [security] - Optional security schemes config component.
+ * @param {Record<string, SwaggerSecurityScheme>} [security] - Optional security schemes config component.
  * @returns {void}
  */
-export function injectSecuritySchemes(doc: SwaggerDocument, security?: Record<string, any>): void {
+export function injectSecuritySchemes(
+  doc: SwaggerDocument,
+  security?: Record<string, SwaggerSecurityScheme>,
+) {
   if (security) {
     doc.components = doc?.components || {};
     doc.components.securitySchemes = {

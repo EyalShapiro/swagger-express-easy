@@ -27,3 +27,11 @@ export function mergeByKey<T extends Record<string, unknown>>(
 
   return Array.from(map.values());
 }
+
+export function cloneDocument<T>(obj: T, defaultValue: Partial<T> = {}): T | Partial<T> {
+  try {
+    return JSON.parse(JSON.stringify(obj));
+  } catch {
+    return defaultValue ?? {};
+  }
+}

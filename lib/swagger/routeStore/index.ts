@@ -28,7 +28,7 @@ export class SwaggerRouteStore {
    * @param {SwaggerRouteDefinition | SwaggerRouteDefinition[]} route - Route definition(s) to add.
    * @returns {void}
    */
-  public static addRoute(route: SwaggerRouteDefinition | SwaggerRouteDefinition[]): void {
+  public static addRoute(route: SwaggerRouteDefinition | SwaggerRouteDefinition[]) {
     const store = SwaggerRouteStore.getData();
     const addSingle = (r: SwaggerRouteDefinition) => {
       const idx = store.routes.findIndex(
@@ -55,7 +55,7 @@ export class SwaggerRouteStore {
    * Clears all registered routes.
    * @returns {void}
    */
-  public clear(): void {
+  public clear() {
     this.routes = [];
   }
 }
@@ -69,8 +69,6 @@ export class SwaggerRouteStore {
  * @example
  * createSwaggerRoute({ method: 'get', path: '/health' });
  */
-export function createSwaggerRoute(
-  routeDef: SwaggerRouteDefinition | SwaggerRouteDefinition[],
-): void {
+export function createSwaggerRoute(routeDef: SwaggerRouteDefinition | SwaggerRouteDefinition[]) {
   SwaggerRouteStore.addRoute(routeDef);
 }

@@ -38,7 +38,7 @@ export class RouteBuilder {
    * @param {string} [basePath] - If provided, only that key is removed; otherwise the entire cache is cleared.
    * @returns {void}
    */
-  static invalidateCache(basePath?: string): void {
+  static invalidateCache(basePath?: string) {
     if (basePath) {
       routeCache.delete(basePath);
     } else {

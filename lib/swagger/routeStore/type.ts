@@ -27,7 +27,7 @@ export interface ParametersType {
   name?: string;
   required?: boolean;
   type?: string;
-  items?: { type: string } & JsonObject;
+  items: { type: string } & JsonObject;
   schema?: SchemaType;
   description?: string;
 }
