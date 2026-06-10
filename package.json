@@ -20,7 +20,14 @@
     "docs",
     "autogen",
     "documentation",
-    "rest"
+    "rest",
+    "autodocs",
+    "swagger-node",
+    "generated",
+    "swagger-typescript",
+    "node-swagger",
+    "swagger-ts",
+    "swagger-express-ts"
   ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
