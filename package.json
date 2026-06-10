@@ -74,9 +74,7 @@
     "swagger-autogen": "^2.23.7",
     "ts-jest": "^29.2.5",
     "tsup": "^8.3.5",
-    "typescript": "^5.7.2"
-  },
-  "overrides": {
-    "multer": "1.4.5-lts.1"
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.61.0"
   }
 }
