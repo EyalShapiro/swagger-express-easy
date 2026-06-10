@@ -1,6 +1,7 @@
-import fs from 'fs';
+import type { FSWatcher } from 'fs';
 import path from 'path';
 import { logWarning } from '../utils/logger';
+import { fileExists, watchDirectory } from '../utils/fs-helper';
 
 export type WatcherCallback = () => void | Promise<void>;
 
@@ -9,7 +10,7 @@ export type WatcherCallback = () => void | Promise<void>;
  * Supports debouncing to prevent multiple rapid triggers when files change.
  */
 export class FileWatcher {
-  private activeWatchers: fs.FSWatcher[] = [];
+  private activeWatchers: FSWatcher[] = [];
   private debounceTimer: NodeJS.Timeout | null = null;
   private readonly debounceMs = 300;
   private isWatching = false;
@@ -32,21 +33,26 @@ export class FileWatcher {
     // Try to find common parent directories to avoid watching same files multiple times
     // For simplicity we just watch the provided paths or the src directory
     const defaultWatchDir = path.resolve(process.cwd(), 'src');
-    if (fs.existsSync(defaultWatchDir)) {
+    if (fileExists(defaultWatchDir)) {
       resolvedPaths.add(defaultWatchDir);
     }
 
     for (const dirPath of resolvedPaths) {
-      if (fs.existsSync(dirPath)) {
+      if (fileExists(dirPath)) {
         try {
-          // fs.watch with recursive: true is supported on macOS and Windows
-          const watcher = fs.watch(dirPath, { recursive: true }, (eventType, filename) => {
-            if (filename && this.shouldIgnore(filename)) {
+          // watchDirectory uses recursive: true which is supported on macOS and Windows
+          const watcher = watchDirectory(dirPath, (eventType, filename) => {
+            if (!filename) {
+              // Some platforms return null filename. We ignore it to prevent infinite loops.
               return;
             }
+            if (this.shouldIgnore(filename)) {
+              return;
+            }
+            console.log(`[Watcher] Triggered by: ${filename} (${eventType}) in ${dirPath}`);
             this.triggerChange();
           });
-          
+
           watcher.on('error', (err) => {
             logWarning(`Watcher error on ${dirPath}: ${err.message}`);
           });
@@ -68,7 +74,7 @@ export class FileWatcher {
       clearTimeout(this.debounceTimer);
       this.debounceTimer = null;
     }
-    
+
     for (const watcher of this.activeWatchers) {
       watcher.close();
     }
@@ -79,7 +85,7 @@ export class FileWatcher {
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
     }
-    
+
     this.debounceTimer = setTimeout(() => {
       this.debounceTimer = null;
       if (this.isWatching) {

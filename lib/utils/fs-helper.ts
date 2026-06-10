@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs, { type FSWatcher, type WatchEventType } from 'fs';
 import path from 'path';
 
 /**
@@ -57,4 +57,18 @@ export function readJsonFile<T = unknown>(filePath: string): T | undefined {
   } catch {
     return undefined;
   }
+}
+
+/**
+ * Watches a directory recursively for file changes.
+ *
+ * @param {string} dirPath - Absolute path to the directory.
+ * @param {(eventType: WatchEventType, filename: string | null) => void} listener - Callback for file events.
+ * @returns {FSWatcher} The file system watcher instance.
+ */
+export function watchDirectory(
+  dirPath: string,
+  listener: (eventType: WatchEventType, filename: string | null) => void,
+): FSWatcher {
+  return fs.watch(dirPath, { recursive: true }, listener);
 }
