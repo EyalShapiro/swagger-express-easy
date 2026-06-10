@@ -1,7 +1,7 @@
 import type { Express } from 'express';
 import type { SwaggerDocument, SwaggerParameter, SwaggerSecurityScheme } from '../types/swagger';
 import { scanRoutes } from './scanner';
-import { parseRoutes } from './parser';
+import { parseRoutes, autoDetectPathParameters } from './parser';
 import { SwaggerRouteStore } from '../swagger/routeStore';
 import type { SwaggerRouteDefinition } from '../swagger/routeStore/type';
 import { getCleanBasePath, normalizePath } from '../utils/path';
@@ -116,17 +116,12 @@ function mergeRouteParameters(
   addCustomParams(parameters, 'header', route.headers);
   addCustomParams(parameters, 'cookie', route.cookies);
 
-  // Auto-detect path parameters from the normalized path (e.g. /ping/{id} → add 'id' as path param)
-  const pathParamNames = [...normalizedPath.matchAll(/\{([^}]+)\}/g)].map((m) => m[1]);
-  for (const paramName of pathParamNames) {
-    const alreadyDefined = parameters.some((p) => p.name === paramName && p.in === 'path');
+  // Auto-detect path parameters from the normalized path
+  const autoParams = autoDetectPathParameters(normalizedPath);
+  for (const param of autoParams) {
+    const alreadyDefined = parameters.some((p) => p.name === param.name && p.in === 'path');
     if (!alreadyDefined) {
-      parameters.push({
-        name: paramName,
-        in: 'path',
-        required: true,
-        schema: { type: 'string' },
-      });
+      parameters.push(param);
     }
   }
 
@@ -150,6 +145,20 @@ function mergeRequestBodyAndResponses(
   }
 }
 
+function buildMethodObject(
+  pathItem: Record<string, unknown>,
+  route: SwaggerRouteDefinition,
+): void {
+  pathItem[route.method] = {
+    ...(pathItem[route.method] ?? {}),
+    summary: route?.description?.summary,
+    description: route?.description?.text,
+    tags: route?.tags ?? (route?.tag ? [route.tag] : undefined),
+    deprecated: route?.deprecated,
+    security: route?.security,
+  };
+}
+
 /**
  * Merges manual SwaggerRoute definitions from SwaggerRouteStore into the Swagger document.
  *
@@ -169,14 +178,7 @@ export function mergeManualRoutes(doc: SwaggerDocument, caseSensitive: boolean):
     }
 
     const pathItem = doc.paths[normalizedPath] as Record<string, unknown>;
-    pathItem[route.method] = {
-      ...(pathItem[route.method] ?? {}),
-      summary: route?.description?.summary,
-      description: route?.description?.text,
-      tags: route?.tags ?? (route?.tag ? [route.tag] : undefined),
-      deprecated: route?.deprecated,
-      security: route?.security,
-    };
+    buildMethodObject(pathItem, route);
 
     const existingParams = (pathItem[route.method] as Record<string, unknown>)?.parameters as
       | SwaggerParameter[]

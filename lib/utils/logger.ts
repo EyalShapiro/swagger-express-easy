@@ -60,3 +60,26 @@ export function logWarning(message: string): void {
 export function logError(message: string, err?: unknown): void {
   console.error(`${RED}${PREFIX} Error: ${message}${RESET}`, err ?? '');
 }
+
+/**
+ * Logs an error with a clear structure and an actionable suggested fix.
+ *
+ * @param {string} message - Primary error message.
+ * @param {string} filePath - Path to the file causing the issue.
+ * @param {string} suggestion - Actionable suggestion for the user.
+ * @param {unknown} [err] - Optional underlying error object.
+ */
+export function logErrorWithSuggestion(
+  message: string,
+  filePath: string,
+  suggestion: string,
+  err?: unknown,
+): void {
+  const lines = [
+    `${RED}${PREFIX} Error: ${message}${RESET}`,
+    `  → ${filePath}`,
+    '',
+    `  ${YELLOW}Suggested fix:${RESET} ${suggestion}`,
+  ];
+  console.error(lines.join('\n'), err ?? '');
+}

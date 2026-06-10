@@ -1,6 +1,6 @@
 import path from 'path';
 import { fileExists } from '../utils/fs-helper';
-import { logWarning } from '../utils/logger';
+import { logWarning, logErrorWithSuggestion } from '../utils/logger';
 
 const warnedFiles = new Set<string>();
 
@@ -23,7 +23,11 @@ export function isGlobPattern(pattern: string): boolean {
 export function warnMissingFileOnce(filePath: string): void {
   if (!warnedFiles.has(filePath)) {
     warnedFiles.add(filePath);
-    logWarning(`Route file/configuration not found at "${filePath}". Ignoring.`);
+    logErrorWithSuggestion(
+      'Route configuration not found',
+      filePath,
+      'Verify the file exists and the path is correct in your endpointsRoutes configuration.'
+    );
   }
 }
 

@@ -22,6 +22,61 @@ export function autoDetectPathParameters(openApiPath: string): SwaggerParameter[
   }));
 }
 
+function resolveRoutePath(route: ParsedRoute, isGlobalCaseSensitive: boolean): string {
+  const isRouteCaseSensitive =
+    route?.meta?.caseSensitive !== undefined ? route.meta.caseSensitive : isGlobalCaseSensitive;
+  const rawPath = isRouteCaseSensitive ? route?.path : route?.path?.toLowerCase();
+  return normalizePath(rawPath ?? '');
+}
+
+function ensurePathEntry(
+  paths: Record<string, SwaggerPathItem>,
+  openApiPath: string,
+  method: string,
+): SwaggerOperation {
+  if (!paths[openApiPath]) {
+    paths[openApiPath] = {};
+  }
+  const pathItem = paths[openApiPath] as Record<string, SwaggerOperation>;
+  if (!pathItem[method]) {
+    pathItem[method] = {
+      responses: { 200: { description: 'OK' } },
+    } as SwaggerOperation;
+  }
+  return pathItem[method] as SwaggerOperation;
+}
+
+function addAutoPathParams(op: SwaggerOperation, openApiPath: string): void {
+  const autoParams = autoDetectPathParameters(openApiPath);
+  if (autoParams.length > 0) {
+    if (!op.parameters) {
+      op.parameters = [];
+    }
+    for (const param of autoParams) {
+      const alreadyDefined = op.parameters.some((p) => p.name === param.name && p.in === 'path');
+      if (!alreadyDefined) {
+        op.parameters.push(param);
+      }
+    }
+  }
+}
+
+function addMulterRequestBody(
+  op: SwaggerOperation,
+  middlewares: ((...args: unknown[]) => unknown)[],
+): void {
+  const multerMetadata = parseMulterMiddlewares(middlewares);
+  if (multerMetadata) {
+    op.requestBody = {
+      content: {
+        'multipart/form-data': {
+          schema: multerMetadata.schema,
+        },
+      },
+    };
+  }
+}
+
 /**
  * Parses raw Express routes into OpenAPI paths.
  * Also processes multer middleware to generate `multipart/form-data` request bodies.
@@ -36,51 +91,11 @@ export function parseRoutes(routes: ParsedRoute[], isGlobalCaseSensitive = false
   const paths: Record<string, SwaggerPathItem> = {};
 
   for (const route of routes ?? []) {
-    // Determine case sensitivity
-    const isRouteCaseSensitive =
-      route?.meta?.caseSensitive !== undefined ? route.meta.caseSensitive : isGlobalCaseSensitive;
+    const openApiPath = resolveRoutePath(route, isGlobalCaseSensitive);
+    const op = ensurePathEntry(paths, openApiPath, route.method);
 
-    const rawPath = isRouteCaseSensitive ? route?.path : route?.path?.toLowerCase();
-    const openApiPath = normalizePath(rawPath ?? '');
-
-    if (!paths[openApiPath]) {
-      paths[openApiPath] = {};
-    }
-
-    const pathItem = paths[openApiPath] as Record<string, SwaggerOperation>;
-    if (!pathItem[route?.method]) {
-      pathItem[route?.method] = {
-        responses: { 200: { description: 'OK' } },
-      } as SwaggerOperation;
-    }
-
-    const op = pathItem[route?.method] as SwaggerOperation;
-
-    // Auto-detect path parameters
-    const autoParams = autoDetectPathParameters(openApiPath);
-    if (autoParams.length > 0) {
-      if (!op.parameters) {
-        op.parameters = [];
-      }
-      for (const param of autoParams) {
-        const alreadyDefined = op.parameters.some((p) => p.name === param.name && p.in === 'path');
-        if (!alreadyDefined) {
-          op.parameters.push(param);
-        }
-      }
-    }
-
-    // Parse Multer
-    const multerMetadata = parseMulterMiddlewares(route?.middlewares ?? []);
-    if (multerMetadata) {
-      op.requestBody = {
-        content: {
-          'multipart/form-data': {
-            schema: multerMetadata.schema,
-          },
-        },
-      };
-    }
+    addAutoPathParams(op, openApiPath);
+    addMulterRequestBody(op, route.middlewares ?? []);
   }
 
   return { paths };

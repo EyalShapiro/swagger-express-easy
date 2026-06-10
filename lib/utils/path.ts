@@ -16,53 +16,31 @@ export function normalizePath(path: string): string {
   }
   return normalized || '/';
 }
-export function extractPathParams(path: string): string[] {
-  return [...path.matchAll(/:([A-Za-z0-9_]+)/g)].map((match) => match[1]);
-}
-/**
- * Safely joins a basePath and a normalized route path.
- *
- * @param {string} base - The base path (e.g. `'/api/v1'`).
- * @param {string} normalized - A normalized path segment (must start with `/` or will be prefixed).
- * @returns {string} The concatenated path.
- * @example
- * joinBasePath('/api/v1', '/users') // → '/api/v1/users'
- */
-export function joinBasePath(base: string, normalized: string): string {
-  const cleanBase = getCleanBasePath(base);
-  const cleanNormalized = normalized.startsWith('/') ? normalized : `/${normalized}`;
-  return cleanBase + cleanNormalized;
-}
-/**
- * Clean path from trailing slash.
- * @param {string|null|undefined} path
- * @returns {string}
- */
+
 export function getCleanBasePath(path: string | null | undefined): string {
   if (!path) return '';
   return path.replace(/\/$/, '');
 }
 
 /**
- * Returns a proper local IP if address is `'::'` or `'0.0.0.0'`.
+ * Ensures the value is returned as a string.
  *
- * @param {string} addr - The raw server address string.
- * @returns {string} `'localhost'` when the address is a wildcard, otherwise the original address.
- * @example
- * getAddrFormatToLocal('::')       // → 'localhost'
- * getAddrFormatToLocal('127.0.0.1') // → '127.0.0.1'
+ * @param {T} path - The value to cast or format to a string.
+ * @returns {string} The string representation.
  */
-export function getAddrFormatToLocal(addr: string): string {
-  if (addr === '::' || addr === '0.0.0.0') {
-    return 'localhost';
-  }
-  return addr;
-}
 export function toString<T>(path: T): string {
   if (typeof path === 'string') return path;
 
   return path?.toString() ?? '';
 }
+
+/**
+ * Safely joins a base path and a sub path.
+ *
+ * @param {string} base - The base path (e.g. `'/api'`).
+ * @param {string} sub - The sub path (e.g. `'/users'`).
+ * @returns {string} The concatenated path.
+ */
 export function joinPaths(base: string, sub: string): string {
   const b = base.endsWith('/') ? base.slice(0, -1) : base;
   const s = sub.startsWith('/') ? sub : `/${sub}`;

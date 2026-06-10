@@ -5,6 +5,9 @@ import { buildSwaggerConfig } from './helpers';
 import { customSwaggerMiddleware } from './middleware';
 import type { SwaggerDocument } from 'swagger-express-easy/types/swagger';
 
+import { FileWatcher } from '../core/watcher';
+import { logError } from '../utils/logger';
+
 /**
  * Core manager class for generating and serving the Swagger/OpenAPI document.
  * Handles document generation via `swagger-autogen`, route scanning, and UI mounting.
@@ -17,6 +20,7 @@ export class SwaggerManager {
   private app: Express;
   private options: SwaggerSetupOptions;
   private swaggerDocument: SwaggerDocument | Record<string, unknown> | undefined;
+  private watcher: FileWatcher | null = null;
 
   /**
    * @param {Express} app - The Express application instance.
@@ -45,29 +49,59 @@ export class SwaggerManager {
 
       const optionsMiddleware = {
         swaggerDocument: this.swaggerDocument,
-        swaggerUiOptions: this.options?.swaggerUiOptions,
+        swaggerUiOptions: this.options?.swaggerUiOptions as Record<string, unknown> | undefined,
       };
 
-      if (this.options?.watch) {
-        // Basic watch mode: in a real implementation this would hook into fs.watch
-        // or a middleware that regenerates on request in non-prod.
-        this.app.use(swaggerPath, async (_req, _res, next) => {
-          this.swaggerDocument = await generateDocument(this.app, config);
-          optionsMiddleware.swaggerDocument = this.swaggerDocument;
-          next();
-        });
-      }
+      this.mountSwaggerUI(swaggerPath, optionsMiddleware);
 
-      this.app.use(swaggerPath, customSwaggerMiddleware(optionsMiddleware));
+      if (this.options?.watch) {
+        this.startWatcher(config, optionsMiddleware);
+      }
     } catch (err) {
-      console.error('\x1b[31m[swagger-express-easy] Failed to initialize Swagger.\x1b[0m', err);
-      // Fallback
-      this.app.use(swaggerPath, (_req, res) => {
-        res.status(500).json({ error: 'Swagger Initialization Failed' });
-      });
+      logError('Failed to initialize Swagger.', err);
+      this.mountFallbackHandler(swaggerPath);
     }
 
     return { path: swaggerPath, document: this.swaggerDocument };
+  }
+
+  private mountSwaggerUI(
+    swaggerPath: string,
+    optionsMiddleware: {
+      swaggerDocument: SwaggerDocument | Record<string, unknown> | undefined;
+      swaggerUiOptions?: Record<string, unknown>;
+    },
+  ): void {
+    this.app.use(swaggerPath, customSwaggerMiddleware(optionsMiddleware as any));
+  }
+
+  private mountFallbackHandler(swaggerPath: string): void {
+    this.app.use(swaggerPath, (_req, res) => {
+      res.status(500).json({ error: 'Swagger Initialization Failed' });
+    });
+  }
+
+  private startWatcher(
+    config: ReturnType<typeof buildSwaggerConfig>,
+    optionsMiddleware: {
+      swaggerDocument: SwaggerDocument | Record<string, unknown> | undefined;
+    },
+  ): void {
+    this.watcher = new FileWatcher(async () => {
+      try {
+        this.swaggerDocument = await generateDocument(this.app, config);
+        optionsMiddleware.swaggerDocument = this.swaggerDocument;
+      } catch (err) {
+        logError('Failed to regenerate Swagger document during watch.', err);
+      }
+    });
+
+    // Determine paths to watch based on config or default to 'src'
+    const pathsToWatch = config.endpointsRoutes?.length
+      ? config.endpointsRoutes.map(p => p.replace(/\*.*$/, '')) // strip glob parts for directories
+      : [process.cwd()];
+
+    this.watcher.start(pathsToWatch);
   }
 }
 

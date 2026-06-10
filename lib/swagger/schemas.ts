@@ -272,20 +272,3 @@ function inferSwaggerType<T = unknown>(value: T): SchemaPropertyType {
 
   return 'string';
 }
-
-/**
- * Helper to wrap properties as required by default.
- * Useful for defining response bodies based on entity properties.
- *
- * @param {Record<string, SchemaPropertyDef>} properties - Property definitions.
- * @returns {Record<string, SchemaPropertyDef>} Same map with `required: true` on every property.
- */
-export function defineResponseProperties(
-  properties: Record<string, SchemaPropertyDef>,
-): Record<string, SchemaPropertyDef> {
-  const result: Record<string, SchemaPropertyDef> = {};
-  for (const [key, def] of Object.entries(properties ?? {})) {
-    result[key] = { required: true, ...def };
-  }
-  return result;
-}
